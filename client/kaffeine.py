@@ -29,7 +29,9 @@ s.connect((host, c.USR_PORT))
 print c.WELCOME_MSG
 
 # Initial PROPFIND request
-s.send(c.METHOD_PROPFIND + c.PROTOCOL)
+msg = c.METHOD_PROPFIND + c.PROTOCOL
+s.send(msg)
+print ('Sent: ' + msg)
 data = s.recv(c.MSG_BUF_SIZE)
 print 'Server replies: ' + data
     
@@ -41,7 +43,9 @@ else:
     method = c.METHOD_GET
 
 # Send the message!
-s.send(method + request + c.PROTOCOL)
+msg = method + request + c.PROTOCOL
+s.send(msg)
+print ('Sent: ' + msg)
 
 data = s.recv(c.MSG_BUF_SIZE)
 print 'Server replies: ' + data

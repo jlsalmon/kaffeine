@@ -78,6 +78,8 @@ int main(void) {
 				msg[numbytes] = '\0';
 				fprintf(stderr, "Message received: %s\n", msg);
 
+				strncpy(msg, "HTCPCP/1.0 200 OK", strlen(msg));
+
 				if (send(connfd, msg, strlen(msg), 0) == -1) {
 					perror("Server send");
 					exit(1);
@@ -106,6 +108,11 @@ int main(void) {
 	}
 
 	return 0;
+}
+
+char parse_request(const char request[]) {
+	request = "HTCPCP/1.0 200 OK\r\n";
+	return *request;
 }
 
 /* Useful function to create server endpoint */
@@ -147,10 +154,10 @@ int create_tcp_endpoint(int port) {
 }
 
 void init_sigchld_handler() {
-	/* Signal handler stuff, deals with signals from dying children */
+	// Signal handler stuff, deals with signals from dying children
 	/*
 	 struct sigaction sa;
-	 sa.sa_handler = sigchld_handler; /* reap all dead processes
+	 sa.sa_handler = sigchld_handler; // reap all dead processes
 	 sigemptyset(&sa.sa_mask);
 	 sa.sa_flags = SA_RESTART;
 

@@ -13,6 +13,7 @@
 int create_tcp_endpoint();
 void init_sigchld_handler();
 void sigchld_handler();
+char parse_request(const char *);
 
 #endif	/* KAFFEINE_H */
 
