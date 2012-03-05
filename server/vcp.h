@@ -10,14 +10,15 @@
 
 #define STATE_OFF 		0
 #define STATE_READY		1
-#define STATE_BREWING           2
-#define STATE_POURING           3
+#define STATE_BREWING   2
+#define STATE_POURING   3
 #define NUM_STATES 		4
 
 #define EVENT_BREW		0
 #define EVENT_STOP		1
 #define EVENT_POUR		2
-#define NUM_EVENTS		3
+#define EVENT_READY		3
+#define NUM_EVENTS		4
 
 #define NUM_POTS 		5
 

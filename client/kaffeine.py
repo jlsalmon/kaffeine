@@ -10,7 +10,7 @@ import sys
 import lib
 import c
 
-if 1 > len(sys.argv) > 2:
+if not sys.argv[1]:
     sys.exit('usage: client.py request-uri')
 else:
     request = sys.argv[1]

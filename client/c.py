@@ -13,4 +13,4 @@ METHOD_PROPFIND = 'PROPFIND'
 METHOD_WHEN = 'WHEN '
 ACCEPT_ADDS = 'Accept-Additions: '
 WELCOME_MSG = '''\nWelcome to kaffeine, the virtual coffee shop of the future!
-Kaffeine uses the HTCPCP protocol to control an array virtual coffee pots for your enjoyment.\n'''
+Kaffeine uses the HTCPCP protocol to control an array of \nvirtual coffee pots for your enjoyment.\n'''

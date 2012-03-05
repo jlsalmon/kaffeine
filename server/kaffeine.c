@@ -41,7 +41,7 @@ int main(void) {
 
 	init_sigchld_handler();
 
-        init_pots();
+	init_pots();
 
 	/* main accept() loop */
 	while (1) {
@@ -148,17 +148,17 @@ int create_tcp_endpoint(int port) {
 
 void init_sigchld_handler() {
 	/* Signal handler stuff, deals with signals from dying children */
-/*
-	struct sigaction sa;
-	sa.sa_handler = sigchld_handler; /* reap all dead processes 
-	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = SA_RESTART;
+	/*
+	 struct sigaction sa;
+	 sa.sa_handler = sigchld_handler; /* reap all dead processes
+	 sigemptyset(&sa.sa_mask);
+	 sa.sa_flags = SA_RESTART;
 
-	if (sigaction(SIGCHLD, &sa, NULL) == -1) {
-		perror("Server sigaction");
-		exit(1);
-	}
-*/
+	 if (sigaction(SIGCHLD, &sa, NULL) == -1) {
+	 perror("Server sigaction");
+	 exit(1);
+	 }
+	 */
 }
 
 /**
