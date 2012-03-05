@@ -1,5 +1,5 @@
 /*
- * pot.c
+ * kaffeine.c
  *
  *  Created on: Feb 27, 2012
  *      Author: jl2-salmon
