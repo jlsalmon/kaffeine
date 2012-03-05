@@ -33,7 +33,13 @@ include Makefile
 OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
+<<<<<<< HEAD
 OBJECTFILES=
+=======
+OBJECTFILES= \
+	${OBJECTDIR}/src/server/kaffeine.o \
+	${OBJECTDIR}/src/server/vcp.o
+>>>>>>> 593b856f515fbe2873da79ef8c55963a59103bb2
 
 
 # C Compiler Flags
@@ -60,6 +66,19 @@ ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/kaffeine: ${OBJECTFILES}
 	${MKDIR} -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}
 	${LINK.c} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/kaffeine ${OBJECTFILES} ${LDLIBSOPTIONS} 
 
+<<<<<<< HEAD
+=======
+${OBJECTDIR}/src/server/kaffeine.o: src/server/kaffeine.c 
+	${MKDIR} -p ${OBJECTDIR}/src/server
+	${RM} $@.d
+	$(COMPILE.c) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/src/server/kaffeine.o src/server/kaffeine.c
+
+${OBJECTDIR}/src/server/vcp.o: src/server/vcp.c 
+	${MKDIR} -p ${OBJECTDIR}/src/server
+	${RM} $@.d
+	$(COMPILE.c) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/src/server/vcp.o src/server/vcp.c
+
+>>>>>>> 593b856f515fbe2873da79ef8c55963a59103bb2
 # Subprojects
 .build-subprojects:
 

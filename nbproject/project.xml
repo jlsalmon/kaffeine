@@ -4,12 +4,23 @@
     <configuration>
         <data xmlns="http://www.netbeans.org/ns/make-project/1">
             <name>kaffeine</name>
+<<<<<<< HEAD
             <c-extensions/>
             <cpp-extensions/>
             <header-extensions/>
             <sourceEncoding>UTF-8</sourceEncoding>
             <make-dep-projects/>
             <sourceRootList/>
+=======
+            <c-extensions>c</c-extensions>
+            <cpp-extensions/>
+            <header-extensions>h</header-extensions>
+            <sourceEncoding>UTF-8</sourceEncoding>
+            <make-dep-projects/>
+            <sourceRootList>
+                <sourceRootElem>src</sourceRootElem>
+            </sourceRootList>
+>>>>>>> 593b856f515fbe2873da79ef8c55963a59103bb2
             <confList>
                 <confElem>
                     <name>Debug</name>
