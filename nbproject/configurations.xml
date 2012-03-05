@@ -12,24 +12,6 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
-<<<<<<< HEAD
-=======
-      <logicalFolder name="src" displayName="src" projectFiles="true">
-        <logicalFolder name="client" displayName="client" projectFiles="true">
-          <itemPath>src/client/c.py</itemPath>
-          <itemPath>src/client/c.pyc</itemPath>
-          <itemPath>src/client/kaffeine.py</itemPath>
-          <itemPath>src/client/lib.py</itemPath>
-          <itemPath>src/client/lib.pyc</itemPath>
-        </logicalFolder>
-        <logicalFolder name="server" displayName="server" projectFiles="true">
-          <itemPath>src/server/kaffeine.c</itemPath>
-          <itemPath>src/server/kaffeine.h</itemPath>
-          <itemPath>src/server/vcp.c</itemPath>
-          <itemPath>src/server/vcp.h</itemPath>
-        </logicalFolder>
-      </logicalFolder>
->>>>>>> 593b856f515fbe2873da79ef8c55963a59103bb2
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="Test Files"
@@ -40,16 +22,10 @@
                    displayName="Important Files"
                    projectFiles="false"
                    kind="IMPORTANT_FILES_FOLDER">
-      <itemPath>Makefile</itemPath>
+      <itemPath>kaffeine-Makefile.mk</itemPath>
     </logicalFolder>
   </logicalFolder>
-<<<<<<< HEAD
-=======
-  <sourceRootList>
-    <Elem>src</Elem>
-  </sourceRootList>
->>>>>>> 593b856f515fbe2873da79ef8c55963a59103bb2
-  <projectmakefile>Makefile</projectmakefile>
+  <projectmakefile>kaffeine-Makefile.mk</projectmakefile>
   <confs>
     <conf name="Debug" type="1">
       <toolsSet>
@@ -57,12 +33,6 @@
         <compilerSet>default</compilerSet>
       </toolsSet>
       <compileType>
-<<<<<<< HEAD
-=======
-        <cTool>
-          <commandLine>-std=c99</commandLine>
-        </cTool>
->>>>>>> 593b856f515fbe2873da79ef8c55963a59103bb2
       </compileType>
     </conf>
     <conf name="Release" type="1">

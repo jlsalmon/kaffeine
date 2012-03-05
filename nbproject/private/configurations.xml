@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configurationDescriptor version="80">
-  <projectmakefile>Makefile</projectmakefile>
+  <projectmakefile>kaffeine-Makefile.mk</projectmakefile>
   <confs>
     <conf name="Debug" type="1">
       <toolsSet>

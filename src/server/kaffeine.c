@@ -116,7 +116,7 @@ int main(void) {
 
 int parse_request(char* request, char* response) {
 
-	strncpy(response, "HTCPCP/1.0 200 OK\r\n", 200);
+	strncpy(response, C_200, 200);
 	return TRUE;
 }
 
