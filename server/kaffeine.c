@@ -78,9 +78,13 @@ int main(void) {
 				msg[numbytes] = '\0';
 				fprintf(stderr, "Message received: %s\n", msg);
 
-				strncpy(msg, "HTCPCP/1.0 200 OK", strlen(msg));
 
-				if (send(connfd, msg, strlen(msg), 0) == -1) {
+				char response[200];
+
+				parse_request(msg, response);
+
+
+				if (send(connfd, response, strlen(response), 0) == -1) {
 					perror("Server send");
 					exit(1);
 				}
@@ -110,9 +114,9 @@ int main(void) {
 	return 0;
 }
 
-char parse_request(const char request[]) {
-	request = "HTCPCP/1.0 200 OK\r\n";
-	return *request;
+int parse_request(char* request, char* response) {
+	response = "HTCPCP/1.0 200 OK\r\n";
+	return TRUE;
 }
 
 /* Useful function to create server endpoint */
