@@ -51,9 +51,8 @@ print ('Sent: ' + msg)
 data = s.recv(c.MSG_BUF_SIZE)
 print ('Server replies: ' + data)
 
-data = raw_input('Enter input: ')
-print (data)
-s.send(data)
+s.send(raw_input('Enter input: '))
+print(s.recv(c.MSG_BUF_SIZE))
 
 s.close()
 sys.exit('Connection closed. Program will exit.')
