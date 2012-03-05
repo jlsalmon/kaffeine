@@ -10,8 +10,9 @@ import sys
 import lib
 import c
 
-if not sys.argv[1]:
-    sys.exit('usage: client.py request-uri')
+if len(sys.argv) < 2:
+    #sys.exit('usage: client.py request-uri')
+    request = 'coffee://localhost/pot-1/?milk=dash'
 else:
     request = sys.argv[1]
 
@@ -29,11 +30,11 @@ s.connect((host, c.USR_PORT))
 print c.WELCOME_MSG
 
 # Initial PROPFIND request
-msg = c.METHOD_PROPFIND + c.PROTOCOL
-s.send(msg)
-print ('Sent: ' + msg)
-data = s.recv(c.MSG_BUF_SIZE)
-print 'Server replies: ' + data
+#msg = c.METHOD_PROPFIND + c.PROTOCOL
+#s.send(msg)
+#print ('Sent: ' + msg)
+#data = s.recv(c.MSG_BUF_SIZE)
+#print 'Server replies: ' + data
     
 if len(path) < 3:
     method = c.METHOD_BREW
@@ -48,10 +49,14 @@ s.send(msg)
 print ('Sent: ' + msg)
 
 data = s.recv(c.MSG_BUF_SIZE)
-print 'Server replies: ' + data
-s.send(raw_input())
-    
+print ('Server replies: ' + data)
+
+data = raw_input('Enter input: ')
+print (data)
+s.send(data)
+
 s.close()
+sys.exit('Connection closed. Program will exit.')
 
 
 

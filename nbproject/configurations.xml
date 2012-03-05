@@ -12,6 +12,21 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
+      <logicalFolder name="src" displayName="src" projectFiles="true">
+        <logicalFolder name="client" displayName="client" projectFiles="true">
+          <itemPath>src/client/c.py</itemPath>
+          <itemPath>src/client/c.pyc</itemPath>
+          <itemPath>src/client/kaffeine.py</itemPath>
+          <itemPath>src/client/lib.py</itemPath>
+          <itemPath>src/client/lib.pyc</itemPath>
+        </logicalFolder>
+        <logicalFolder name="server" displayName="server" projectFiles="true">
+          <itemPath>src/server/kaffeine.c</itemPath>
+          <itemPath>src/server/kaffeine.h</itemPath>
+          <itemPath>src/server/vcp.c</itemPath>
+          <itemPath>src/server/vcp.h</itemPath>
+        </logicalFolder>
+      </logicalFolder>
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="Test Files"
@@ -25,6 +40,9 @@
       <itemPath>kaffeine-Makefile.mk</itemPath>
     </logicalFolder>
   </logicalFolder>
+  <sourceRootList>
+    <Elem>src</Elem>
+  </sourceRootList>
   <projectmakefile>kaffeine-Makefile.mk</projectmakefile>
   <confs>
     <conf name="Debug" type="1">
@@ -33,6 +51,9 @@
         <compilerSet>default</compilerSet>
       </toolsSet>
       <compileType>
+        <cTool>
+          <commandLine>-D_POSIX_C_SOURCE -std=c99</commandLine>
+        </cTool>
       </compileType>
     </conf>
     <conf name="Release" type="1">

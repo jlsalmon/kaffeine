@@ -22,6 +22,7 @@
 #define USR_PORT 	60000 	/* the port users connect to */
 #define MAX_Q_SIZE 	10 	/* max no. of pending connections in server queue */
 #define MAX_DATA_SIZE 	200	/* max message size in bytes */
+#define SA_RESTART	0x10000000
 
 int main(void) {
 
@@ -73,18 +74,16 @@ int main(void) {
 				exit(1);
 			}
 
-			while (strcmp(msg, "quit") != 0) {
+			while (strcmp(msg, "quit\r\n") != 0) {
 				/* end of string */
 				msg[numbytes] = '\0';
 				fprintf(stderr, "Message received: %s\n", msg);
+				fprintf(stderr, "wtf\n");
+				//char response[200];
 
+				//parse_request(msg, response);
 
-				char response[200];
-
-				parse_request(msg, response);
-
-
-				if (send(connfd, response, strlen(response), 0) == -1) {
+				if (send(connfd, msg, strlen(msg), 0) == -1) {
 					perror("Server send");
 					exit(1);
 				}
@@ -92,7 +91,7 @@ int main(void) {
 				/* zero the message buffer */
 				memset(&msg, 0, sizeof(msg));
 
-				if ((numbytes = recv(connfd, msg, MAX_DATA_SIZE - 1, 0)) == -1) {
+				if ((numbytes = recv(connfd, msg, MAX_DATA_SIZE - 1, 0)) < 0) {
 					perror("Server recv");
 					exit(1);
 				}
@@ -116,7 +115,37 @@ int main(void) {
 
 int parse_request(char* request, char* response) {
 
-	strncpy(response, C_200, 200);
+	const char delimiters[] = " :/?";
+	char *method, *scheme, *host, *pot_no, *adds;
+
+	method = strtok(request, delimiters);
+	printf("Method: %s", method);
+
+	if (strcmp(method, METHOD_PROPFIND)) {
+
+		strncpy(response, HTCPCP_VERSION, 200);
+		strcat(response, C_200);
+
+	} else if (strcmp(method, METHOD_BREW) || strcmp(method, METHOD_POST)) {
+
+		scheme = strtok(NULL, delimiters);
+		host = strtok(NULL, delimiters);
+		pot_no = strtok(NULL, delimiters);
+
+	} else if (strcmp(method, METHOD_GET)) {
+
+		scheme = strtok(NULL, delimiters);
+		host = strtok(NULL, delimiters);
+		pot_no = strtok(NULL, delimiters);
+		adds = strtok(NULL, delimiters);
+
+	} else if (strcmp(method, METHOD_WHEN)) {
+
+	} else {
+		strncpy(response, HTCPCP_VERSION, 200);
+		strcat(response, C_406);
+	}
+
 	return TRUE;
 }
 
@@ -160,17 +189,17 @@ int create_tcp_endpoint(int port) {
 
 void init_sigchld_handler() {
 	// Signal handler stuff, deals with signals from dying children
-	/*
-	 struct sigaction sa;
-	 sa.sa_handler = sigchld_handler; // reap all dead processes
-	 sigemptyset(&sa.sa_mask);
-	 sa.sa_flags = SA_RESTART;
 
-	 if (sigaction(SIGCHLD, &sa, NULL) == -1) {
-	 perror("Server sigaction");
-	 exit(1);
-	 }
-	 */
+//	struct sigaction sa;
+//	sa.sa_handler = sigchld_handler; // reap all dead processes
+//	sigemptyset(&sa.sa_mask);
+//	sa.sa_flags = SA_RESTART;
+//
+//	if (sigaction(SIGCHLD, &sa, NULL) == -1) {
+//		perror("Server sigaction");
+//		exit(1);
+//	}
+
 }
 
 /**

@@ -33,7 +33,9 @@ include kaffeine-Makefile.mk
 OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
-OBJECTFILES=
+OBJECTFILES= \
+	${OBJECTDIR}/src/server/kaffeine.o \
+	${OBJECTDIR}/src/server/vcp.o
 
 
 # C Compiler Flags
@@ -59,6 +61,16 @@ LDLIBSOPTIONS=
 ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/kaffeine: ${OBJECTFILES}
 	${MKDIR} -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}
 	${LINK.c} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/kaffeine ${OBJECTFILES} ${LDLIBSOPTIONS} 
+
+${OBJECTDIR}/src/server/kaffeine.o: src/server/kaffeine.c 
+	${MKDIR} -p ${OBJECTDIR}/src/server
+	${RM} $@.d
+	$(COMPILE.c) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/src/server/kaffeine.o src/server/kaffeine.c
+
+${OBJECTDIR}/src/server/vcp.o: src/server/vcp.c 
+	${MKDIR} -p ${OBJECTDIR}/src/server
+	${RM} $@.d
+	$(COMPILE.c) -O2 -MMD -MP -MF $@.d -o ${OBJECTDIR}/src/server/vcp.o src/server/vcp.c
 
 # Subprojects
 .build-subprojects:

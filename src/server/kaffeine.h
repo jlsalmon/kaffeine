@@ -9,6 +9,11 @@
 #define	KAFFEINE_H
 
 #define HTCPCP_VERSION  "HTCPCP/1.0 "
+#define METHOD_BREW     "BREW"
+#define METHOD_POST     "POST"
+#define METHOD_GET      "GET"
+#define METHOD_WHEN     "WHEN"
+#define METHOD_PROPFIND "PROPFIND"
 #define C_200           "200 OK\r\n"
 #define C_406           "406 Not Acceptable\r\n"
 #define C_407           "407 Pot Turned Off\r\n"
@@ -16,9 +21,9 @@
 #define C_418           "418 I'm A Teapot\r\n"
 #define C_504           "504 Cup Overflow\r\n"
 #define C_505           "505 Cup Gone Cold\r\n"
-#define QUIT_MSG		"Goodbye!\n"
-#define TRUE 			1
-#define FALSE			0
+#define QUIT_MSG	"Goodbye!\n"
+#define TRUE 		1
+#define FALSE		0
 
 int create_tcp_endpoint();
 void init_sigchld_handler();
