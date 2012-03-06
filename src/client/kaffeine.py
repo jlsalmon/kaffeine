@@ -11,8 +11,7 @@ import lib
 import c
 
 if len(sys.argv) < 2:
-    #sys.exit('usage: client.py request-uri')
-    request = 'coffee://localhost/pot-1/?milk=dash'
+    sys.exit('usage: kaffeine.py request-uri')
 else:
     request = sys.argv[1]
 
@@ -52,7 +51,9 @@ data = s.recv(c.MSG_BUF_SIZE)
 print ('Server replies: ' + data)
 
 s.send(raw_input('Enter input: '))
-print(s.recv(c.MSG_BUF_SIZE))
+
+data = s.recv(c.MSG_BUF_SIZE)
+print ('Server replies: ' + data)
 
 s.close()
 sys.exit('Connection closed. Program will exit.')
