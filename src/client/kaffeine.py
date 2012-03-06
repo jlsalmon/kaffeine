@@ -11,8 +11,8 @@ import lib
 import c
 
 if len(sys.argv) < 2:
-    #sys.exit('usage: client.py request-uri')
-    request = 'coffee://localhost/pot-1/?milk=dash'
+    sys.exit('usage: client.py request-uri')
+    #request = 'coffee://localhost/pot-1/?milk=dash'
 else:
     request = sys.argv[1]
 
