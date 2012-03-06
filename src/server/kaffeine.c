@@ -21,7 +21,7 @@
 
 #define USR_PORT 	60000 	/* the port users connect to */
 #define MAX_Q_SIZE 	10 	/* max no. of pending connections in server queue */
-#define MAX_DATA_SIZE 	200	/* max message size in bytes */
+#define MAX_DATA_SIZE 	1024	/* max message size in bytes */
 #define SA_RESTART	0x10000000
 
 int main(void) {
@@ -82,7 +82,7 @@ int main(void) {
                 msg[numbytes] = '\0';
                 fprintf(stderr, "Message received: %s\n", msg);
 
-                char response[200];
+                char response[MAX_DATA_SIZE];
 
                 parse_request(msg, response);
 
@@ -129,6 +129,8 @@ int parse_request(char* request, char* response) {
         fprintf(stderr, "%s\n", method);
         strncpy(response, HTCPCP_VERSION, 200);
         strcat(response, C_200);
+        strcat(response, CONTENT_TYPE);
+        strcat(response, VALID_ADDITIONS);
 
     } else if (strncmp(method, METHOD_BREW, 3) == 0) {
 
