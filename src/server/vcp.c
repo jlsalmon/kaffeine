@@ -18,7 +18,7 @@ int propfind(pot_struct *pot, char* response) {
         return ERR_TEAPOT;
     } else {
         char val_adds[30];
-        sprintf(val_adds, "Valid additions for Pot %d: \n\n", pot);
+        sprintf(val_adds, "Valid additions for Pot %d: \n\n", pot->pot_id);
         strcat(response, val_adds);
         strcat(response, VALID_ADDITIONS);
         return TRUE;

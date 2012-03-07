@@ -39,7 +39,7 @@
 #define TRUE            1
 #define FALSE           0
 
-typedef void (*tfp) (int);
+typedef void (*tfp) (pot_struct);
 
 typedef struct {
     int next_state;
