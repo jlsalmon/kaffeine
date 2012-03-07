@@ -121,55 +121,66 @@ int parse_request(char* request, char* response) {
 
     const char delimiters[] = " :/?";
     char *method, *scheme, *host, *pot_no, *adds;
+    char *rqcpy;
 
-    method = strtok(request, delimiters);
+    rqcpy = strdup(request);
+    method = strtok(rqcpy, delimiters);
+    scheme = strtok(NULL, delimiters);
+    host = strtok(NULL, delimiters);
+    pot_no = strtok(NULL, delimiters);
+    adds = strtok(NULL, delimiters);
+
+    fprintf(stderr, "Method: %s, Scheme: %s, Host: %s, Pot: %s, Adds: %s\n"
+            , method, scheme, host, pot_no, adds);
 
     if (strncmp(method, METHOD_PROPFIND, 3) == 0) {
-
-        fprintf(stderr, "%s\n", method);
-        strncpy(response, HTCPCP_VERSION, 200);
-        strcat(response, C_200);
-        strcat(response, CONTENT_TYPE);
-        strcat(response, VALID_ADDITIONS);
-
+        propfind_request(pot_no, response);
     } else if (strncmp(method, METHOD_BREW, 3) == 0) {
-
-        fprintf(stderr, "Method: BREW\n");
-        scheme = strtok(NULL, delimiters);
-        host = strtok(NULL, delimiters);
-        pot_no = strtok(NULL, delimiters);
-
-        fprintf(stderr, "%s, %s, %s, %s\n", method, scheme, host, pot_no);
-
-        strncpy(response, HTCPCP_VERSION, 200);
-        strcat(response, C_200);
-
+        brew_request(pot_no, response);
     } else if (strncmp(method, METHOD_GET, 3) == 0) {
-
-        scheme = strtok(NULL, delimiters);
-        host = strtok(NULL, delimiters);
-        pot_no = strtok(NULL, delimiters);
-        adds = strtok(NULL, delimiters);
-
-        fprintf(stderr, "%s, %s, %s, %s, %s\n", method, scheme, host, pot_no, adds);
-
-        strncpy(response, HTCPCP_VERSION, 200);
-        strcat(response, C_200);
-
+        get_request(pot_no, adds, response);
     } else if (strncmp(method, METHOD_WHEN, 3) == 0) {
-
-        fprintf(stderr, "Method: WHEN\n");
-
-        strncpy(response, HTCPCP_VERSION, 200);
-        strcat(response, C_200);
-
+        when_request(pot_no, response);
     } else {
-        fprintf(stderr, "Method unknown\n");
         strncpy(response, HTCPCP_VERSION, 200);
         strcat(response, C_406);
     }
 
     return TRUE;
+}
+
+int propfind_request(char* pot_no, char* response) {
+
+    strncpy(response, HTCPCP_VERSION, 200);
+    strcat(response, C_200);
+    strcat(response, CONTENT_TYPE);
+
+    if (propfind(pot_no, response) == 0) {
+        strncpy(response, HTCPCP_VERSION, 200);
+        strcat(response, C_418);
+        strcat(response, CONTENT_TYPE);
+        strcat(response, M_418);
+    } 
+
+    return TRUE;
+}
+
+int brew_request(char* pot_no, char* response) {
+
+    strncpy(response, HTCPCP_VERSION, 200);
+    strcat(response, C_200);
+}
+
+int get_request(char* pot_no, char* adds, char* response) {
+
+    strncpy(response, HTCPCP_VERSION, 200);
+    strcat(response, C_200);
+}
+
+int when_request(char* pot_no, char* response) {
+
+    strncpy(response, HTCPCP_VERSION, 200);
+    strcat(response, C_200);
 }
 
 /* Useful function to create server endpoint */

@@ -21,9 +21,13 @@
 #define NUM_EVENTS	4
 
 #define NUM_POTS 	5
+#define TEAPOT          "pot-5"
 
-#define VALID_ADDITIONS "Milk types: Cream, Half-and-half, Whole-milk, Part-skim, Skim, Non-dairy\nSyrup types: Vanilla, Almond, Raspberry\nSweetener types: White-sugar, Sweetener, Raw-cane, Honey\nSpice types: Cinnamon, Cardamom\nAlcohol types: Brandy, Rum, Whiskey, Aquavit, Kahlua\nVolume units: [1-5] or dash, splash, little, medium, lots\n"
-#define BEVERAGE        "              ) (\n               (    )\n              ____(___ \n          _|`--------`| \n         (C|          |__ \n       /` `\\          /  `\\ \n       \\    `========`    / \n        `'--------------'`\n"
+#define VALID_ADDITIONS "Milk types:\tCream, Half-and-half, Whole-milk, Part-skim, Skim, Non-dairy\nSyrup types:\tVanilla, Almond, Raspberry\nSweeteners:\tWhite-sugar, Sweetener, Raw-cane, Honey\nSpice types:\tCinnamon, Cardamom\nAlcohol types:\tBrandy, Rum, Whiskey, Aquavit, Kahlua\nVolume units:\t[1-5], dash, splash, little, medium, lots\n"
+#define BEVERAGE        "               ) (\n              (    )\n             ____(___ \n          _|`--------`| \n         (C|          |__ \n       /` `\\          /  `\\ \n       \\    `========`    / \n        `'--------------'`\n"
+
+#define TRUE            1
+#define FALSE           0
 
 void off_action();
 void brewing_action();
@@ -40,7 +44,7 @@ typedef struct {
 } pot_state_table;
 
 typedef struct {
-    int pot_id;
+    char pot_id[10];
     int current_state;
     pot_state_table states[NUM_STATES][NUM_EVENTS];
 } pot_struct;

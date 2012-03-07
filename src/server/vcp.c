@@ -9,6 +9,13 @@
 
 pot_struct pots[NUM_POTS];
 
+int propfind(char* pot_id, char* response) {
+    
+    if (strcmp(pot_id, TEAPOT) == 0) {
+        return FALSE;
+    }
+}
+
 void init_pots() {
 
     fprintf(stderr, "Initialising virtual coffee pots...\n");
@@ -19,7 +26,7 @@ void init_pots() {
 
     for (int i = 0; i < NUM_POTS; ++i) {
 
-        pots[i].pot_id = i;
+        snprintf(pots[i].pot_id, sizeof (pots[i].pot_id), "pot-%d", i);
         pots[i].current_state = STATE_READY;
 
         for (int j = 0; j < NUM_STATES; ++j) {
