@@ -39,6 +39,9 @@ if len(path) < 3:
     print 'Server replies:\n' + response
 
     if not lib.status_code(response):
+        while True:
+            s.send(s.recv(MSG_BUF_SIZE))
+        s.close()
         sys.exit('The server could not complete '
                  + 'the request. Program will exit.')
 

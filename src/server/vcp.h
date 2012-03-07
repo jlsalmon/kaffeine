@@ -45,17 +45,4 @@ void ready_action();
 void null_action();
 void init_pots();
 
-typedef void (*tfp) (char*);
-
-typedef struct {
-    int next_state;
-    tfp action;
-} pot_state_table;
-
-typedef struct {
-    char pot_id[10];
-    int current_state;
-    pot_state_table states[NUM_STATES][NUM_EVENTS];
-} pot_struct;
-
 #endif /* VCP_H_ */

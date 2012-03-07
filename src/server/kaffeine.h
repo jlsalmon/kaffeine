@@ -8,6 +8,10 @@
 #ifndef KAFFEINE_H
 #define	KAFFEINE_H
 
+#define USR_PORT 	60000           /* the port users connect to */
+#define MAX_Q_SIZE 	10              /* max no. of pending connections in server queue */
+#define MAX_DATA_SIZE 	1024            /* max message size in bytes */
+
 #define HTCPCP_VERSION  "HTCPCP/1.0 "
 #define METHOD_BREW     "BREW"
 #define METHOD_POST     "POST"
@@ -39,15 +43,14 @@
 #define FALSE		0
 
 static void *handle_request(void *ptr);
-int parse_request(char*, char*);
-int propfind_request(char*, char*);
-int brew_request(char*, char*, char*);
-int get_request(char*, char*, char*);
-int when_request(char*, char*);
+void parse_request(char*, char*);
+
+void propfind_request(char*, char*);
+void brew_request(char*, char*, char*);
+void get_request(char*, char*, char*);
+void when_request(char*, char*);
 
 int create_tcp_endpoint();
-void init_sigchld_handler();
-void sigchld_handler();
 
 #endif	/* KAFFEINE_H */
 

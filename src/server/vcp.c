@@ -8,8 +8,20 @@
 #include <string.h>
 #include "vcp.h"
 
-pot_struct pots[NUM_POTS];
+typedef void (*tfp) (char*);
 
+typedef struct {
+    int next_state;
+    tfp action;
+} pot_state_table;
+
+typedef struct {
+    char pot_id[10];
+    int current_state;
+    pot_state_table states[NUM_STATES][NUM_EVENTS];
+} pot_struct;
+
+pot_struct pots[NUM_POTS];
 int last_state = STATE_OFF;
 
 int propfind(char* pot_id, char* response) {
@@ -21,6 +33,7 @@ int propfind(char* pot_id, char* response) {
         sprintf(val_adds, "Valid additions for %s: \n\n", pot_id);
         strcat(response, val_adds);
         strcat(response, VALID_ADDITIONS);
+        return TRUE;
     }
 }
 
@@ -41,18 +54,18 @@ int brew(char* pot_id, char* adds) {
 
                 pots[i].states[last_state][event].action(pot_id);
                 pots[i].current_state = pots[i].states[last_state][event].next_state;
-                return TRUE;
             }
         }
     }
+    return TRUE;
 }
 
 int get(char* pot_id, char* adds) {
-
+    return TRUE;
 }
 
 int when(char* pot_id) {
-
+    return TRUE;
 }
 
 void init_pots() {

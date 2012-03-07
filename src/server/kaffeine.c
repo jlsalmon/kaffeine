@@ -20,11 +20,6 @@
 #include "kaffeine.h"
 #include "vcp.h"
 
-#define USR_PORT 	60000           /* the port users connect to */
-#define MAX_Q_SIZE 	5               /* max no. of pending connections in server queue */
-#define MAX_DATA_SIZE 	1024            /* max message size in bytes */
-#define SA_RESTART	0x10000000      /* this should be in signal.h, but isn't */
-
 typedef struct {
     pthread_t tid;
     int sock;
@@ -47,8 +42,6 @@ int main(void) {
     } else {
         fprintf(stderr, "TCP endpoint created.\n");
     }
-
-    init_sigchld_handler();
 
     init_pots();
 
@@ -166,6 +159,11 @@ int main(void) {
     }
 }
 
+/**
+ * 
+ * @param tptr
+ * @return 
+ */
 static void *handle_request(void *tptr) {
     thread_struct *thread;
     thread = (thread_struct *) tptr;
@@ -173,24 +171,24 @@ static void *handle_request(void *tptr) {
     char response[MAX_DATA_SIZE];
     int numbytes;
 
-    printf("Created thread %d\n", pthread_self());
+    printf("Created thread %d\n", (int) pthread_self());
 
-    /* no message yet, zero buffer */
     memset(&request, 0, sizeof (request));
-    request[0] = '\0';
 
     /* receive initial message */
     if ((numbytes = recv(thread->sock, request, MAX_DATA_SIZE - 1, 0)) == -1) {
         perror("recv");
         exit(1);
     }
+    request[numbytes] = '\0';
 
-    while (strcmp(request, "q") != 0) {
-        /* end of string */
-        request[numbytes] = '\0';
+    while (strcmp(request, "quit") != 0) {
+
         fprintf(stderr, "Message received: \n%s\n", request);
 
-        parse_request(request, response);
+        if (strcmp(request, "\0") != 0) {
+            parse_request(request, response);
+        }
 
         if (send(thread->sock, response, strlen(response), 0) == -1) {
             perror("send");
@@ -203,6 +201,7 @@ static void *handle_request(void *tptr) {
             perror("recv");
             exit(1);
         }
+        request[numbytes] = '\0';
     }
 
     if (send(thread->sock, QUIT_MSG, strlen(QUIT_MSG), 0) == -1) {
@@ -210,11 +209,12 @@ static void *handle_request(void *tptr) {
         exit(1);
     }
 
+    fprintf(stderr, "Thread %d exiting.\n", (int) pthread_self());
     close((int) thread->sock);
     thread->busy = FALSE;
 }
 
-int parse_request(char* request, char* response) {
+void parse_request(char* request, char* response) {
 
     const char delimiters[] = " :/?";
     char *method, *scheme, *host, *pot_no, *start_line, *header;
@@ -248,10 +248,10 @@ int parse_request(char* request, char* response) {
         strcat(response, C_406);
     }
 
-    return TRUE;
+    return;
 }
 
-int propfind_request(char* pot_no, char* response) {
+void propfind_request(char* pot_no, char* response) {
 
     strcpy(response, HTCPCP_VERSION);
     strcat(response, C_200);
@@ -263,11 +263,9 @@ int propfind_request(char* pot_no, char* response) {
         strcat(response, CONTENT_TYPE);
         strcat(response, M_418);
     }
-
-    return TRUE;
 }
 
-int brew_request(char* pot_no, char* header, char* response) {
+void brew_request(char* pot_no, char* header, char* response) {
 
     strcpy(response, HTCPCP_VERSION);
     int err = brew(pot_no, header);
@@ -296,13 +294,13 @@ int brew_request(char* pot_no, char* header, char* response) {
     }
 }
 
-int get_request(char* pot_no, char* adds, char* response) {
+void get_request(char* pot_no, char* adds, char* response) {
 
     strcpy(response, HTCPCP_VERSION);
     strcat(response, C_200);
 }
 
-int when_request(char* pot_no, char* response) {
+void when_request(char* pot_no, char* response) {
 
     strcpy(response, HTCPCP_VERSION);
     strcat(response, C_200);
@@ -344,26 +342,4 @@ int create_tcp_endpoint(int port) {
     }
 
     return sock;
-}
-
-void init_sigchld_handler() {
-
-    struct sigaction sa;
-    sa.sa_handler = sigchld_handler; // reap all dead processes
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_RESTART;
-
-    if (sigaction(SIGCHLD, &sa, NULL) == -1) {
-        perror("Server sigaction");
-        exit(1);
-    }
-}
-
-/**
- * Signal handler for child fork exit
- */
-void sigchld_handler(int s) {
-    while (wait(NULL) > 0) {
-        /* wait for any child to finish */
-    }
 }

@@ -52,7 +52,7 @@
       </toolsSet>
       <compileType>
         <cTool>
-          <commandLine>-D_POSIX_C_SOURCE -std=c99 -pthread -Wall</commandLine>
+          <commandLine>-D_GNU_SOURCE -std=c99 -pthread -Wall</commandLine>
           <warningLevel>2</warningLevel>
         </cTool>
       </compileType>
