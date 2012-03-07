@@ -13,6 +13,11 @@ int propfind(char* pot_id, char* response) {
     
     if (strcmp(pot_id, TEAPOT) == 0) {
         return FALSE;
+    } else {
+        char val_adds[30];
+        sprintf(val_adds, "Valid additions for %s: \n\n", pot_id);
+        strcat(response, val_adds);
+        strcat(response, VALID_ADDITIONS);
     }
 }
 

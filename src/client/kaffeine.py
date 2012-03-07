@@ -2,19 +2,22 @@
 Created on 25 Feb 2012
 
 @author: jussy
+
+Main entry point for kaffeine client.
 '''
-# filename: client.py
 
 import socket
 import sys
 import lib
-import c
+from consts import *
 
+# Check args
 if len(sys.argv) < 2:
     sys.exit('usage: kaffeine.py request-uri')
 else:
     request = sys.argv[1]
 
+# Check request-uri is valid
 if not lib.valid_url(request):
     sys.exit('Invalid request-uri structure')
 else:
@@ -24,35 +27,34 @@ else:
 
 # Open socket, connect
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect((host, c.USR_PORT))
+s.connect((host, USR_PORT))
 
-print c.WELCOME_MSG
-  
+print WELCOME_MSG
+
+# Determine which method to use. If no additions were
+# supplied, method will be BREW, otherwise it will be GET
 if len(path) < 3:
-    method = c.METHOD_BREW
     # Initial PROPFIND request
-    msg = c.METHOD_PROPFIND + request + c.HTCPCP_VERSION
-    s.send(msg)
-    print 'Sent: ' + msg
-    data = s.recv(c.MSG_BUF_SIZE)
-    print 'Server replies: ' + data
+    response = lib.propfind(s, request)
+    print 'Server replies:\n' + response
+
+    if not lib.status_code(response):
+        sys.exit('\nThe server could not complete '
+                 + 'the request. Program will exit.')
+
     order = lib.get_order()
+    print order
+    response = lib.brew(s, request, order)
     
 else:
-    method = c.METHOD_GET
+    response = lib.get(s, request)
 
-# Send the message!
-msg = method + request + c.HTCPCP_VERSION
-s.send(msg)
-print 'Sent: ' + msg
-
-data = s.recv(c.MSG_BUF_SIZE)
-print 'Server replies:\n' + data
+print 'Server replies:\n' + response
 
 while True:
     data = raw_input('Enter input: ')
     s.send(data)
-    print 'Server replies:\n' + s.recv(c.MSG_BUF_SIZE)
+    print 'Server replies:\n' + s.recv(MSG_BUF_SIZE)
     
     if data == 'quit':
         s.close()
