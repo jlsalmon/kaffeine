@@ -17,8 +17,8 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <pthread.h>
-#include "kaffeine.h"
 #include "vcp.h"
+#include "kaffeine.h"
 
 typedef struct {
     pthread_t tid;
@@ -27,6 +27,7 @@ typedef struct {
 } thread_struct;
 
 thread_struct threads[NUM_POTS];
+pot_struct pots[NUM_POTS];
 
 int main(void) {
 
@@ -43,7 +44,11 @@ int main(void) {
         fprintf(stderr, "TCP endpoint created.\n");
     }
 
-    init_pots();
+    fprintf(stderr, "Initialising virtual coffee pots...\n");
+    for (int i = 0; i < NUM_POTS; ++i) {
+        init_pot(&pots[i], i);
+    }
+    fprintf(stderr, "Pots initialised.\n");
 
     /* main accept() loop */
     while (1) {
@@ -217,29 +222,32 @@ void parse_request(char* request, char* response) {
     const char delimiters[] = " :/?";
     char *method, *scheme, *host, *pot_no, *start_line, *header;
     char *rqcpy;
+    int pot_id;
 
     rqcpy = strdup(request);
     method = strtok(rqcpy, delimiters);
     scheme = strtok(NULL, delimiters);
     host = strtok(NULL, delimiters);
-    pot_no = strtok(NULL, delimiters);
 
-    fprintf(stderr, "Method: %s, Scheme: %s, Host: %s, Pot: %s\n"
-            , method, scheme, host, pot_no);
+    pot_no = strtok(NULL, delimiters);
+    pot_id = extract_pot_id(pot_no);
+
+    fprintf(stderr, "Method: %s, Scheme: %s, Host: %s, Pot: %d\n"
+            , method, scheme, host, pot_id);
 
     if (strcmp(method, METHOD_PROPFIND) == 0) {
-        propfind_request(pot_no, response);
+        propfind_request(&pots[pot_id], response);
 
     } else if (strcmp(method, METHOD_BREW) == 0) {
         start_line = strtok(request, "\r\n");
         header = strtok(NULL, "\r\n");
-        brew_request(pot_no, header, response);
+        brew_request(&pots[pot_id], header, response);
 
     } else if (strcmp(method, METHOD_GET) == 0) {
-        get_request(pot_no, request, response);
+        get_request(&pots[pot_id], request, response);
 
     } else if (strcmp(method, METHOD_WHEN) == 0) {
-        when_request(pot_no, response);
+        when_request(&pots[pot_id], response);
 
     } else {
         strcpy(response, HTCPCP_VERSION);
@@ -249,13 +257,22 @@ void parse_request(char* request, char* response) {
     return;
 }
 
-void propfind_request(char* pot_no, char* response) {
+int extract_pot_id(char* pot_no) {
+    const char delimiters[] = "-";
+    char *head, *s_id;
+
+    head = strtok(pot_no, delimiters);
+    s_id = strtok(NULL, delimiters);
+    return atoi(s_id);
+}
+
+void propfind_request(pot_struct * pot, char* response) {
 
     strcpy(response, HTCPCP_VERSION);
     strcat(response, C_200);
     strcat(response, CONTENT_TYPE);
 
-    if (propfind(pot_no, response) == ERR_TEAPOT) {
+    if (propfind(pot, response) == ERR_TEAPOT) {
         strcpy(response, HTCPCP_VERSION);
         strcat(response, C_418);
         strcat(response, CONTENT_TYPE);
@@ -263,10 +280,10 @@ void propfind_request(char* pot_no, char* response) {
     }
 }
 
-void brew_request(char* pot_no, char* header, char* response) {
+void brew_request(pot_struct* pot, char* header, char* response) {
 
     strcpy(response, HTCPCP_VERSION);
-    int err = brew(pot_no, header);
+    int err = brew(pot, header);
 
     switch (err) {
         case ERR_OFF:
@@ -292,13 +309,28 @@ void brew_request(char* pot_no, char* header, char* response) {
     }
 }
 
-void get_request(char* pot_no, char* adds, char* response) {
+void get_request(pot_struct* pot, char* adds, char* response) {
 
     strcpy(response, HTCPCP_VERSION);
-    strcat(response, C_200);
+    int err = get(pot, adds);
+
+    switch (err) {
+        case ERR_OFF:
+            break;
+        case ERR_BUSY:
+            break;
+        case ERR_CUP_COLD:
+            break;
+        case ERR_OVERFLOW:
+            break;
+        case ERR_TEAPOT:
+            break;
+        default:
+            break;
+    }
 }
 
-void when_request(char* pot_no, char* response) {
+void when_request(pot_struct* pot, char* response) {
 
     strcpy(response, HTCPCP_VERSION);
     strcat(response, C_200);

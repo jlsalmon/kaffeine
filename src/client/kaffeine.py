@@ -39,8 +39,6 @@ if len(path) < 3:
     print 'Server replies:\n' + response
 
     if not lib.status_code(response):
-        while True:
-            s.send(s.recv(MSG_BUF_SIZE))
         s.close()
         sys.exit('The server could not complete '
                  + 'the request. Program will exit.')
@@ -55,9 +53,9 @@ else:
 print 'Server replies:\n' + response
 
 while True:
-    data = raw_input('Enter input: ')
-    s.send(data)
-    print 'Server replies:\n' + s.recv(MSG_BUF_SIZE)
+    data = raw_input('Type "get" to collect your coffee: ')
+    response = lib.get(s, request)
+    print 'Server replies:\n' + response
     
     if data == 'quit':
         s.close()

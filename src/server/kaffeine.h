@@ -44,11 +44,12 @@
 
 static void *handle_request(void *ptr);
 void parse_request(char*, char*);
+int extract_pot_id(char*);
 
-void propfind_request(char*, char*);
-void brew_request(char*, char*, char*);
-void get_request(char*, char*, char*);
-void when_request(char*, char*);
+void propfind_request(pot_struct*, char*);
+void brew_request(pot_struct*, char*, char*);
+void get_request(pot_struct*, char*, char*);
+void when_request(pot_struct*, char*);
 
 int create_tcp_endpoint();
 
