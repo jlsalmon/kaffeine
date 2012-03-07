@@ -16,6 +16,7 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <pthread.h>
 #include "kaffeine.h"
 #include "vcp.h"
 
@@ -24,16 +25,20 @@
 #define MAX_DATA_SIZE 	1024            /* max message size in bytes */
 #define SA_RESTART	0x10000000      /* this should be in signal.h, but isn't */
 
+typedef struct {
+    pthread_t tid;
+    int sock;
+    int busy;
+} thread_struct;
+
+thread_struct threads[NUM_POTS];
+
 int main(void) {
 
-    int connfd, sock;
-    /* client's address info */
+    int sock, tmpsock, curr_thread;
     struct sockaddr_in client_addr;
-    /* size of address structure */
     socklen_t sin_size;
-    /* holds ascii dot quad address */
-    char clientAddr[20];
-    pid_t pid;
+    char cli_addr[20], buf[MAX_DATA_SIZE];
 
     /* Create an endpoint to listen on */
     if ((sock = create_tcp_endpoint(USR_PORT)) < 0) {
@@ -49,73 +54,164 @@ int main(void) {
 
     /* main accept() loop */
     while (1) {
+        curr_thread = 0;
+
+        while (threads[curr_thread].busy == TRUE && curr_thread < NUM_POTS) {
+            curr_thread++;
+        }
+
         sin_size = sizeof (struct sockaddr_in);
 
-        if ((connfd = accept(sock, (struct sockaddr *) &client_addr, &sin_size))
-                == -1) {
-            perror("Server accept");
-            continue;
+        if (curr_thread == NUM_POTS) {
+            fprintf(stderr, "Connection limit reached\n");
+            tmpsock = accept(sock, (struct sockaddr *) &client_addr, &sin_size);
+
+            strcpy(buf, HTCPCP_VERSION);
+            strcat(buf, C_503);
+            strcat(buf, CONTENT_TYPE);
+            strcat(buf, M_503);
+
+            if (send(tmpsock, buf, strlen((char*) buf), 0) <= 0) {
+                perror("write");
+                exit(-1);
+            }
+        } else {
+
+            if ((threads[curr_thread].sock = accept(
+                    sock, (struct sockaddr *) &client_addr, &sin_size)) < 0) {
+                perror("accept");
+                exit(-1);
+            }
+
+            strcpy(cli_addr, inet_ntoa(client_addr.sin_addr));
+            printf("\nConnection established with %s\n", cli_addr);
+
+            threads[curr_thread].busy = TRUE;
+            if (pthread_create(&threads[curr_thread].tid,
+                    NULL,
+                    &handle_request,
+                    (void *) &threads[curr_thread])
+                    != 0) {
+                perror("pthread_create");
+                exit(-2);
+            }
         }
 
-        strcpy(clientAddr, inet_ntoa(client_addr.sin_addr));
-        printf("\nConnection established with %s\n", clientAddr);
+        /*
+                sin_size = sizeof (struct sockaddr_in);
 
-        /* the child process dealing with a client */
-        if (!(pid = fork())) {
-            fprintf(stderr, "Child process started.\n");
-            char msg[MAX_DATA_SIZE];
-            int numbytes;
-
-            /* child does not need the listener */
-            close(sock);
-            /* no message yet, zero buffer */
-            memset(&msg, 0, sizeof (msg));
-            msg[0] = '\0';
-
-            /* receive initial message */
-            if ((numbytes = recv(connfd, msg, MAX_DATA_SIZE - 1, 0)) == -1) {
-                perror("Server recv");
-                exit(1);
-            }
-
-            while (strcmp(msg, "quit") != 0) {
-                /* end of string */
-                msg[numbytes] = '\0';
-                fprintf(stderr, "Message received: %s\n", msg);
-
-                char response[MAX_DATA_SIZE];
-
-                parse_request(msg, response);
-
-                if (send(connfd, response, strlen(response), 0) == -1) {
-                    perror("Server send");
-                    exit(1);
+                if ((connfd = accept(sock, (struct sockaddr *) &client_addr, &sin_size))
+                        == -1) {
+                    perror("Server accept");
+                    continue;
                 }
 
-                /* zero the message buffer */
-                memset(&msg, 0, sizeof (msg));
+                strcpy(clientAddr, inet_ntoa(client_addr.sin_addr));
+                printf("\nConnection established with %s\n", clientAddr);
 
-                if ((numbytes = recv(connfd, msg, MAX_DATA_SIZE - 1, 0)) == -1) {
-                    perror("Server recv");
-                    exit(1);
+                // the child process dealing with a client 
+                if (!(pid = fork())) {
+                    fprintf(stderr, "Child process started.\n");
+                    char msg[MAX_DATA_SIZE];
+                    int numbytes;
+
+                    // child does not need the listener 
+                    close(sock);
+                    // no message yet, zero buffer 
+                    memset(&msg, 0, sizeof (msg));
+                    msg[0] = '\0';
+
+                    // receive initial message 
+                    if ((numbytes = recv(connfd, msg, MAX_DATA_SIZE - 1, 0)) == -1) {
+                        perror("Server recv");
+                        exit(1);
+                    }
+
+                    while (strcmp(msg, "quit") != 0) {
+                        // end of string 
+                        msg[numbytes] = '\0';
+                        fprintf(stderr, "Message received: %s\n", msg);
+
+                        char response[MAX_DATA_SIZE];
+
+                        parse_request(msg, response);
+
+                        if (send(connfd, response, strlen(response), 0) == -1) {
+                            perror("Server send");
+                            exit(1);
+                        }
+
+                        // zero the message buffer 
+                        memset(&msg, 0, sizeof (msg));
+
+                        if ((numbytes = recv(connfd, msg, MAX_DATA_SIZE - 1, 0)) == -1) {
+                            perror("Server recv");
+                            exit(1);
+                        }
+                    }
+
+                    if (send(connfd, QUIT_MSG, strlen(QUIT_MSG), 0) == -1) {
+                        perror("Server send");
+                        exit(1); // error end of child 
+                    }
+
+                    fprintf(stderr, "Child process finished.\n");
+                    close(connfd);
+                    exit(0);
                 }
-            }
 
-            if (send(connfd, QUIT_MSG, strlen(QUIT_MSG), 0) == -1) {
-                perror("Server send");
-                exit(1); /* error end of child */
-            }
+                // parent does not need the connection socket 
+               close(connfd);
+         */
+    }
+}
 
-            fprintf(stderr, "Child process finished.\n");
-            close(connfd);
-            exit(0);
-        }
+static void *handle_request(void *tptr) {
+    thread_struct *thread;
+    thread = (thread_struct *) tptr;
+    char request[MAX_DATA_SIZE];
+    char response[MAX_DATA_SIZE];
+    int numbytes;
 
-        /* parent does not need the connection socket */
-        close(connfd);
+    printf("Created thread %d\n", pthread_self());
+
+    /* no message yet, zero buffer */
+    memset(&request, 0, sizeof (request));
+    request[0] = '\0';
+
+    /* receive initial message */
+    if ((numbytes = recv(thread->sock, request, MAX_DATA_SIZE - 1, 0)) == -1) {
+        perror("recv");
+        exit(1);
     }
 
-    return 0;
+    while (strcmp(request, "quit") != 0) {
+        /* end of string */
+        request[numbytes] = '\0';
+        fprintf(stderr, "Message received: \n%s\n", request);
+
+        parse_request(request, response);
+
+        if (send(thread->sock, response, strlen(response), 0) == -1) {
+            perror("send");
+            exit(1);
+        }
+
+        memset(&request, 0, sizeof (request));
+
+        if ((numbytes = recv(thread->sock, request, MAX_DATA_SIZE - 1, 0)) == -1) {
+            perror("recv");
+            exit(1);
+        }
+    }
+
+    if (send(thread->sock, QUIT_MSG, strlen(QUIT_MSG), 0) == -1) {
+        perror("send");
+        exit(1);
+    }
+
+    close((int) thread->sock);
+    thread->busy = FALSE;
 }
 
 int parse_request(char* request, char* response) {

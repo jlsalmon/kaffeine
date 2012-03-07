@@ -39,7 +39,7 @@ OBJECTFILES= \
 
 
 # C Compiler Flags
-CFLAGS=-D_POSIX_C_SOURCE -std=c99
+CFLAGS=-D_POSIX_C_SOURCE -std=c99 -pthread -Wall
 
 # CC Compiler Flags
 CCFLAGS=
@@ -65,12 +65,12 @@ ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/kaffeine: ${OBJECTFILES}
 ${OBJECTDIR}/src/server/kaffeine.o: src/server/kaffeine.c 
 	${MKDIR} -p ${OBJECTDIR}/src/server
 	${RM} $@.d
-	$(COMPILE.c) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/src/server/kaffeine.o src/server/kaffeine.c
+	$(COMPILE.c) -g -Wall -MMD -MP -MF $@.d -o ${OBJECTDIR}/src/server/kaffeine.o src/server/kaffeine.c
 
 ${OBJECTDIR}/src/server/vcp.o: src/server/vcp.c 
 	${MKDIR} -p ${OBJECTDIR}/src/server
 	${RM} $@.d
-	$(COMPILE.c) -g -MMD -MP -MF $@.d -o ${OBJECTDIR}/src/server/vcp.o src/server/vcp.c
+	$(COMPILE.c) -g -Wall -MMD -MP -MF $@.d -o ${OBJECTDIR}/src/server/vcp.o src/server/vcp.c
 
 # Subprojects
 .build-subprojects:
