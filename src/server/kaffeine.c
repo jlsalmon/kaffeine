@@ -185,7 +185,7 @@ static void *handle_request(void *tptr) {
         exit(1);
     }
 
-    while (strcmp(request, "quit") != 0) {
+    while (strcmp(request, "q") != 0) {
         /* end of string */
         request[numbytes] = '\0';
         fprintf(stderr, "Message received: \n%s\n", request);
