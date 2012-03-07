@@ -65,7 +65,7 @@ int main(void) {
             strcat(buf, M_503);
 
             if (send(tmpsock, buf, strlen((char*) buf), 0) <= 0) {
-                perror("write");
+                perror("send");
                 exit(-1);
             }
         } else {
@@ -178,9 +178,8 @@ static void *handle_request(void *tptr) {
     /* receive initial message */
     if ((numbytes = recv(thread->sock, request, MAX_DATA_SIZE - 1, 0)) == -1) {
         perror("recv");
-        exit(1);
+        pthread_exit((void *) 1);
     }
-    request[numbytes] = '\0';
 
     while (strcmp(request, "quit") != 0) {
 
@@ -190,23 +189,22 @@ static void *handle_request(void *tptr) {
             parse_request(request, response);
         }
 
-        if (send(thread->sock, response, strlen(response), 0) == -1) {
+        if (send(thread->sock, response, strlen(response), MSG_NOSIGNAL) == -1) {
             perror("send");
-            exit(1);
+            pthread_exit((void *) 1);
         }
 
         memset(&request, 0, sizeof (request));
 
         if ((numbytes = recv(thread->sock, request, MAX_DATA_SIZE - 1, 0)) == -1) {
             perror("recv");
-            exit(1);
+            pthread_exit((void *) 1);
         }
-        request[numbytes] = '\0';
     }
 
-    if (send(thread->sock, QUIT_MSG, strlen(QUIT_MSG), 0) == -1) {
+    if (send(thread->sock, QUIT_MSG, strlen(QUIT_MSG), MSG_NOSIGNAL) == -1) {
         perror("send");
-        exit(1);
+        pthread_exit((void *) 1);
     }
 
     fprintf(stderr, "Thread %d exiting.\n", (int) pthread_self());
