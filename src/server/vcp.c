@@ -9,13 +9,13 @@
 #include "vcp.h"
 
 pot_struct pots[NUM_POTS];
-int event = EVENT_BREW;
+
 int last_state = STATE_OFF;
 
 int propfind(char* pot_id, char* response) {
 
     if (strcmp(pot_id, TEAPOT) == 0) {
-        return FALSE;
+        return ERR_TEAPOT;
     } else {
         char val_adds[30];
         sprintf(val_adds, "Valid additions for %s: \n\n", pot_id);
@@ -24,21 +24,34 @@ int propfind(char* pot_id, char* response) {
     }
 }
 
-int brew(char* pot_id, char* adds, char* response) {
+int brew(char* pot_id, char* adds) {
+    int event = EVENT_BREW;
 
     for (int i = 0; i < NUM_POTS; ++i) {
         if (strcmp(pot_id, pots[i].pot_id) == 0) {
-            pots[i].states[last_state][event].action();
-            last_state = pots[i].states[last_state][event].next_state;
+
+            if (pots[i].current_state == STATE_OFF) {
+                return ERR_OFF;
+            } else if (pots[i].current_state == STATE_BREWING
+                    || pots[i].current_state == STATE_POURING) {
+                return ERR_BUSY;
+            } else if (strcmp(pot_id, TEAPOT) == 0) {
+                return ERR_TEAPOT;
+            } else if (pots[i].current_state == STATE_READY) {
+
+                pots[i].states[last_state][event].action(pot_id);
+                pots[i].current_state = pots[i].states[last_state][event].next_state;
+                return TRUE;
+            }
         }
     }
 }
 
-int get(char* pot_id, char* adds, char* response) {
+int get(char* pot_id, char* adds) {
 
 }
 
-int when(char* pot_id, char* response) {
+int when(char* pot_id) {
 
 }
 
@@ -84,8 +97,8 @@ void off_action() {
     printf("Switching off\n");
 }
 
-void brewing_action() {
-    printf("Brewing...\n");
+void brewing_action(char* pot_id) {
+    printf("Brewing on %s...\n", pot_id);
 }
 
 void pouring_action() {

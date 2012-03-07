@@ -19,10 +19,10 @@
 #include "kaffeine.h"
 #include "vcp.h"
 
-#define USR_PORT 	60000 	/* the port users connect to */
-#define MAX_Q_SIZE 	10 	/* max no. of pending connections in server queue */
-#define MAX_DATA_SIZE 	1024	/* max message size in bytes */
-#define SA_RESTART	0x10000000
+#define USR_PORT 	60000           /* the port users connect to */
+#define MAX_Q_SIZE 	5               /* max no. of pending connections in server queue */
+#define MAX_DATA_SIZE 	1024            /* max message size in bytes */
+#define SA_RESTART	0x10000000      /* this should be in signal.h, but isn't */
 
 int main(void) {
 
@@ -33,6 +33,7 @@ int main(void) {
     socklen_t sin_size;
     /* holds ascii dot quad address */
     char clientAddr[20];
+    pid_t pid;
 
     /* Create an endpoint to listen on */
     if ((sock = create_tcp_endpoint(USR_PORT)) < 0) {
@@ -60,7 +61,7 @@ int main(void) {
         printf("\nConnection established with %s\n", clientAddr);
 
         /* the child process dealing with a client */
-        if (!fork()) {
+        if (!(pid = fork())) {
             fprintf(stderr, "Child process started.\n");
             char msg[MAX_DATA_SIZE];
             int numbytes;
@@ -132,18 +133,18 @@ int parse_request(char* request, char* response) {
     fprintf(stderr, "Method: %s, Scheme: %s, Host: %s, Pot: %s\n"
             , method, scheme, host, pot_no);
 
-    if (strncmp(method, METHOD_PROPFIND, 3) == 0) {
+    if (strcmp(method, METHOD_PROPFIND) == 0) {
         propfind_request(pot_no, response);
 
-    } else if (strncmp(method, METHOD_BREW, 3) == 0) {
+    } else if (strcmp(method, METHOD_BREW) == 0) {
         start_line = strtok(request, "\r\n");
         header = strtok(NULL, "\r\n");
         brew_request(pot_no, header, response);
 
-    } else if (strncmp(method, METHOD_GET, 3) == 0) {
+    } else if (strcmp(method, METHOD_GET) == 0) {
         get_request(pot_no, request, response);
 
-    } else if (strncmp(method, METHOD_WHEN, 3) == 0) {
+    } else if (strcmp(method, METHOD_WHEN) == 0) {
         when_request(pot_no, response);
 
     } else {
@@ -160,7 +161,7 @@ int propfind_request(char* pot_no, char* response) {
     strcat(response, C_200);
     strcat(response, CONTENT_TYPE);
 
-    if (propfind(pot_no, response) == 0) {
+    if (propfind(pot_no, response) == ERR_TEAPOT) {
         strcpy(response, HTCPCP_VERSION);
         strcat(response, C_418);
         strcat(response, CONTENT_TYPE);
@@ -173,8 +174,30 @@ int propfind_request(char* pot_no, char* response) {
 int brew_request(char* pot_no, char* header, char* response) {
 
     strcpy(response, HTCPCP_VERSION);
-    strcat(response, C_200);
-    brew(pot_no, header, response);
+    int err = brew(pot_no, header);
+
+    switch (err) {
+        case ERR_OFF:
+            strcat(response, C_407);
+            strcat(response, CONTENT_TYPE);
+            strcat(response, M_407);
+            break;
+        case ERR_BUSY:
+            strcat(response, C_408);
+            strcat(response, CONTENT_TYPE);
+            strcat(response, M_408);
+            break;
+        case ERR_TEAPOT:
+            strcat(response, C_418);
+            strcat(response, CONTENT_TYPE);
+            strcat(response, M_418);
+            break;
+        default:
+            strcat(response, C_200);
+            strcat(response, CONTENT_TYPE);
+            strcat(response, M_200_START);
+            break;
+    }
 }
 
 int get_request(char* pot_no, char* adds, char* response) {
