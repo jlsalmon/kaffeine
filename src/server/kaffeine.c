@@ -120,7 +120,7 @@ int main(void) {
 int parse_request(char* request, char* response) {
 
     const char delimiters[] = " :/?";
-    char *method, *scheme, *host, *pot_no, *adds;
+    char *method, *scheme, *host, *pot_no, *start_line, *header;
     char *rqcpy;
 
     rqcpy = strdup(request);
@@ -128,21 +128,26 @@ int parse_request(char* request, char* response) {
     scheme = strtok(NULL, delimiters);
     host = strtok(NULL, delimiters);
     pot_no = strtok(NULL, delimiters);
-    adds = strtok(NULL, delimiters);
 
-    fprintf(stderr, "Method: %s, Scheme: %s, Host: %s, Pot: %s, Adds: %s\n"
-            , method, scheme, host, pot_no, adds);
+    fprintf(stderr, "Method: %s, Scheme: %s, Host: %s, Pot: %s\n"
+            , method, scheme, host, pot_no);
 
     if (strncmp(method, METHOD_PROPFIND, 3) == 0) {
         propfind_request(pot_no, response);
+
     } else if (strncmp(method, METHOD_BREW, 3) == 0) {
-        brew_request(pot_no, response);
+        start_line = strtok(request, "\r\n");
+        header = strtok(NULL, "\r\n");
+        brew_request(pot_no, header, response);
+
     } else if (strncmp(method, METHOD_GET, 3) == 0) {
-        get_request(pot_no, adds, response);
+        get_request(pot_no, request, response);
+
     } else if (strncmp(method, METHOD_WHEN, 3) == 0) {
         when_request(pot_no, response);
+
     } else {
-        strncpy(response, HTCPCP_VERSION, 200);
+        strcpy(response, HTCPCP_VERSION);
         strcat(response, C_406);
     }
 
@@ -151,35 +156,36 @@ int parse_request(char* request, char* response) {
 
 int propfind_request(char* pot_no, char* response) {
 
-    strncpy(response, HTCPCP_VERSION, 200);
+    strcpy(response, HTCPCP_VERSION);
     strcat(response, C_200);
     strcat(response, CONTENT_TYPE);
 
     if (propfind(pot_no, response) == 0) {
-        strncpy(response, HTCPCP_VERSION, 200);
+        strcpy(response, HTCPCP_VERSION);
         strcat(response, C_418);
         strcat(response, CONTENT_TYPE);
         strcat(response, M_418);
-    } 
+    }
 
     return TRUE;
 }
 
-int brew_request(char* pot_no, char* response) {
+int brew_request(char* pot_no, char* header, char* response) {
 
-    strncpy(response, HTCPCP_VERSION, 200);
+    strcpy(response, HTCPCP_VERSION);
     strcat(response, C_200);
+    brew(pot_no, header, response);
 }
 
 int get_request(char* pot_no, char* adds, char* response) {
 
-    strncpy(response, HTCPCP_VERSION, 200);
+    strcpy(response, HTCPCP_VERSION);
     strcat(response, C_200);
 }
 
 int when_request(char* pot_no, char* response) {
 
-    strncpy(response, HTCPCP_VERSION, 200);
+    strcpy(response, HTCPCP_VERSION);
     strcat(response, C_200);
 }
 

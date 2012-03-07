@@ -5,12 +5,15 @@
  *      Author: jl2-salmon
  */
 #include <stdio.h>
+#include <string.h>
 #include "vcp.h"
 
 pot_struct pots[NUM_POTS];
+int event = EVENT_BREW;
+int last_state = STATE_OFF;
 
 int propfind(char* pot_id, char* response) {
-    
+
     if (strcmp(pot_id, TEAPOT) == 0) {
         return FALSE;
     } else {
@@ -21,13 +24,27 @@ int propfind(char* pot_id, char* response) {
     }
 }
 
+int brew(char* pot_id, char* adds, char* response) {
+
+    for (int i = 0; i < NUM_POTS; ++i) {
+        if (strcmp(pot_id, pots[i].pot_id) == 0) {
+            pots[i].states[last_state][event].action();
+            last_state = pots[i].states[last_state][event].next_state;
+        }
+    }
+}
+
+int get(char* pot_id, char* adds, char* response) {
+
+}
+
+int when(char* pot_id, char* response) {
+
+}
+
 void init_pots() {
 
     fprintf(stderr, "Initialising virtual coffee pots...\n");
-    int event = 0;
-    int last_state = STATE_OFF;
-
-    int inch;
 
     for (int i = 0; i < NUM_POTS; ++i) {
 

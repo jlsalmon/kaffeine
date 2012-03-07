@@ -51,17 +51,14 @@ def valid_url(url):
     return True
 
 def get_order():
-    if re.match(get_yn_input("Would you like milk?"), 'y'):
-        milk = get_quant('How much? ')
-    if re.match(get_yn_input("Would you like sugar?"), 'y'):
-        sugar = get_quant('How much? ')
-    return 'milk=' + milk + '&sugar=' + sugar + "\r\n"
+    if re.match(get_yn_input("Would you like any additions?"), 'y'):
+        order = raw_input('Enter addition string: ')
+    else: 
+        order = ''
+    return order + "\r\n"
 
 def get_yn_input(prompt):
     input = raw_input(prompt + " (y/n) ")
     while not re.match("[yn]", input):
         input = raw_input('Please answer y or n: ')
     return input
-
-def get_quant(prompt):
-    return raw_input(prompt)

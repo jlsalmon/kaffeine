@@ -29,6 +29,11 @@
 #define TRUE            1
 #define FALSE           0
 
+int propfind(char*, char*);
+int brew(char*, char*, char*);
+int get(char*, char*, char*);
+int when(char*, char*);
+
 void off_action();
 void brewing_action();
 void pouring_action();

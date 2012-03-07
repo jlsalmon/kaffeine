@@ -39,7 +39,7 @@ if len(path) < 3:
     print 'Server replies:\n' + response
 
     if not lib.status_code(response):
-        sys.exit('\nThe server could not complete '
+        sys.exit('The server could not complete '
                  + 'the request. Program will exit.')
 
     order = lib.get_order()
