@@ -94,73 +94,6 @@ int main(void) {
                 exit(-2);
             }
         }
-
-        /*
-                sin_size = sizeof (struct sockaddr_in);
-
-                if ((connfd = accept(sock, (struct sockaddr *) &client_addr, &sin_size))
-                        == -1) {
-                    perror("Server accept");
-                    continue;
-                }
-
-                strcpy(clientAddr, inet_ntoa(client_addr.sin_addr));
-                printf("\nConnection established with %s\n", clientAddr);
-
-                // the child process dealing with a client 
-                if (!(pid = fork())) {
-                    fprintf(stderr, "Child process started.\n");
-                    char msg[MAX_DATA_SIZE];
-                    int numbytes;
-
-                    // child does not need the listener 
-                    close(sock);
-                    // no message yet, zero buffer 
-                    memset(&msg, 0, sizeof (msg));
-                    msg[0] = '\0';
-
-                    // receive initial message 
-                    if ((numbytes = recv(connfd, msg, MAX_DATA_SIZE - 1, 0)) == -1) {
-                        perror("Server recv");
-                        exit(1);
-                    }
-
-                    while (strcmp(msg, "quit") != 0) {
-                        // end of string 
-                        msg[numbytes] = '\0';
-                        fprintf(stderr, "Message received: %s\n", msg);
-
-                        char response[MAX_DATA_SIZE];
-
-                        parse_request(msg, response);
-
-                        if (send(connfd, response, strlen(response), 0) == -1) {
-                            perror("Server send");
-                            exit(1);
-                        }
-
-                        // zero the message buffer 
-                        memset(&msg, 0, sizeof (msg));
-
-                        if ((numbytes = recv(connfd, msg, MAX_DATA_SIZE - 1, 0)) == -1) {
-                            perror("Server recv");
-                            exit(1);
-                        }
-                    }
-
-                    if (send(connfd, QUIT_MSG, strlen(QUIT_MSG), 0) == -1) {
-                        perror("Server send");
-                        exit(1); // error end of child 
-                    }
-
-                    fprintf(stderr, "Child process finished.\n");
-                    close(connfd);
-                    exit(0);
-                }
-
-                // parent does not need the connection socket 
-               close(connfd);
-         */
     }
 }
 
@@ -215,6 +148,7 @@ static void *handle_request(void *tptr) {
     fprintf(stderr, "Thread %d exiting.\n", (int) pthread_self());
     close((int) thread->sock);
     thread->busy = FALSE;
+    return 0;
 }
 
 void parse_request(char* request, char* response) {
