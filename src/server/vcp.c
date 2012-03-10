@@ -10,66 +10,79 @@
 #include <unistd.h>
 #include "vcp.h"
 
-int last_state = STATE_OFF;
+int last_state = STATE_READY;
 
 int propfind(pot_struct *pot, char* response) {
-
-    if (pot->pot_id == TEAPOT) {
-        return ERR_TEAPOT;
-    } else {
-        char val_adds[30];
-        sprintf(val_adds, "Valid additions for Pot %d: \n\n", pot->pot_id);
-        strcat(response, val_adds);
-        strcat(response, VALID_ADDITIONS);
-        return TRUE;
-    }
+    char val_adds[30];
+    sprintf(val_adds, "Valid additions for Pot %d: \n\n", pot->pot_id);
+    strcat(response, val_adds);
+    strcat(response, VALID_ADDITIONS);
+    return TRUE;
 }
 
 int brew(pot_struct *pot, char* adds) {
     int event = EVENT_BREW;
 
     if (pot->current_state == STATE_OFF) {
-        return ERR_OFF;
+        return E_OFF;
     } else if (pot->current_state == STATE_BREWING
             || pot->current_state == STATE_POURING) {
-        return ERR_BUSY;
-    } else if (pot->pot_id == TEAPOT) {
-        return ERR_TEAPOT;
+        return E_BUSY;
     } else if (pot->current_state == STATE_READY) {
-
         pot->states[last_state][event].action(pot);
-        pot->current_state = pot->states[last_state][event].next_state;
+        pot->current_state = pot->states[last_state]
+                [event].next_state;
     }
-
     return TRUE;
 }
 
-int get(pot_struct *pot, char* adds) {
-    int event;
-
-    if (adds == NULL) {
-        event = EVENT_READY;
-    } else {
-        event = EVENT_BREW;
-    }
+int get(pot_struct *pot, char* adds, char* response) {
+    int event = EVENT_READY;
 
     if (pot->current_state == STATE_OFF) {
-        return ERR_OFF;
-    } else if (pot->current_state == STATE_BREWING
-            || pot->current_state == STATE_POURING) {
-        return ERR_BUSY;
-    } else if (pot->pot_id == TEAPOT) {
-        return ERR_TEAPOT;
-    } else if (pot->current_state == STATE_READY) {
-
-        pot->states[last_state][event].action(pot->pot_id);
-        pot->current_state = pot->states[last_state][event].next_state;
+        return E_OFF;
     }
 
+/*
+    if (adds == NULL)
+        event = EVENT_READY;
+    else
+        event = EVENT_BREW;
+*/
+
+    switch (event) {
+        case EVENT_BREW:
+            if (pot->current_state == STATE_BREWING) {
+                return E_BUSY;
+            } else if (pot->current_state == STATE_READY) {
+                pot->states[last_state][event].action(pot->pot_id);
+                pot->current_state = pot->states
+                        [last_state][event].next_state;
+            }
+            break;
+        case EVENT_READY:
+            if (pot->current_state == STATE_BREWING) {
+
+                if (difftime(time(NULL), pot->brew_end_time)
+                        >= (BREWING_TIME + T_TO_COLD)) {
+                    return E_CUP_COLD;
+                } else if (difftime(time(NULL), pot->brew_end_time)
+                        >= BREWING_TIME) {
+                    pot->states[last_state][event].action(pot->pot_id);
+                    pot->current_state = pot->states
+                            [last_state][event].next_state;
+                    strcat(response, BEVERAGE);
+                } else {
+                    return E_STILL_BREWING;
+                }
+            }
+            break;
+    }
     return TRUE;
 }
 
 int when(pot_struct *pot) {
+
     return TRUE;
 }
 
@@ -80,6 +93,7 @@ void init_pot(pot_struct *pot, int id) {
 
     for (int j = 0; j < NUM_STATES; ++j) {
         for (int k = 0; k < NUM_EVENTS; ++k) {
+
             pot->states[j][k].next_state = STATE_OFF;
             pot->states[j][k].action = null_action;
         }
@@ -107,21 +121,24 @@ void init_pot(pot_struct *pot, int id) {
 }
 
 void off_action() {
+
     printf("Switching off\n");
 }
 
 void brewing_action(pot_struct *pot) {
+
+    pot->brew_end_time = time(NULL) + BREWING_TIME;
     printf("Brewing on Pot %d...\n", pot->pot_id);
-    sleep(BREWING_TIME);
-    printf("Pot %d finished brewing.\n", pot->pot_id);
-    pot->current_state = STATE_READY;
 }
 
 void pouring_action() {
+
     printf("Pouring...\n");
 }
 
-void ready_action() {
+void ready_action(pot_struct *pot) {
+
+    printf("Pot %d finished brewing.\n", pot->pot_id);
     printf("Ready\n");
 }
 

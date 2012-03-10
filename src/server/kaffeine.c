@@ -166,6 +166,20 @@ void parse_request(char* request, char* response) {
     pot_no = strtok(NULL, delimiters);
     pot_id = extract_pot_id(pot_no);
 
+    strcpy(response, HTCPCP_VERSION);
+
+    if (pot_id == TEAPOT) {
+        strcat(response, C_418);
+        strcat(response, CONTENT_TYPE);
+        strcat(response, M_418);
+        return;
+    } else if (pot_id > NUM_POTS || pot_id < 0) {
+        strcat(response, C_406);
+        strcat(response, CONTENT_TYPE);
+        strcat(response, M_406);
+        return;
+    }
+
     fprintf(stderr, "Method: %s, Scheme: %s, Host: %s, Pot: %d\n"
             , method, scheme, host, pot_id);
 
@@ -183,9 +197,6 @@ void parse_request(char* request, char* response) {
     } else if (strcmp(method, METHOD_WHEN) == 0) {
         when_request(&pots[pot_id], response);
 
-    } else {
-        strcpy(response, HTCPCP_VERSION);
-        strcat(response, C_406);
     }
 
     return;
@@ -201,39 +212,25 @@ int extract_pot_id(char* pot_no) {
 }
 
 void propfind_request(pot_struct * pot, char* response) {
-
-    strcpy(response, HTCPCP_VERSION);
     strcat(response, C_200);
     strcat(response, CONTENT_TYPE);
-
-    if (propfind(pot, response) == ERR_TEAPOT) {
-        strcpy(response, HTCPCP_VERSION);
-        strcat(response, C_418);
-        strcat(response, CONTENT_TYPE);
-        strcat(response, M_418);
-    }
+    propfind(pot, response);
 }
 
 void brew_request(pot_struct* pot, char* header, char* response) {
 
-    strcpy(response, HTCPCP_VERSION);
     int err = brew(pot, header);
 
     switch (err) {
-        case ERR_OFF:
+        case E_OFF:
             strcat(response, C_407);
             strcat(response, CONTENT_TYPE);
             strcat(response, M_407);
             break;
-        case ERR_BUSY:
+        case E_BUSY:
             strcat(response, C_408);
             strcat(response, CONTENT_TYPE);
             strcat(response, M_408);
-            break;
-        case ERR_TEAPOT:
-            strcat(response, C_418);
-            strcat(response, CONTENT_TYPE);
-            strcat(response, M_418);
             break;
         default:
             strcat(response, C_200);
@@ -245,20 +242,38 @@ void brew_request(pot_struct* pot, char* header, char* response) {
 
 void get_request(pot_struct* pot, char* adds, char* response) {
 
-    strcpy(response, HTCPCP_VERSION);
-    int err = get(pot, adds);
+    strcat(response, C_200);
+    strcat(response, CONTENT_TYPE);
+    int err = get(pot, adds, response);
 
     switch (err) {
-        case ERR_OFF:
+        case E_OFF:
+            strcpy(response, HTCPCP_VERSION);
+            strcat(response, C_407);
+            strcat(response, CONTENT_TYPE);
+            strcat(response, M_407);
             break;
-        case ERR_BUSY:
+        case E_BUSY:
+            strcpy(response, HTCPCP_VERSION);
+            strcat(response, C_408);
+            strcat(response, CONTENT_TYPE);
+            strcat(response, M_408);
             break;
-        case ERR_CUP_COLD:
+        case E_STILL_BREWING:
+            strcpy(response, HTCPCP_VERSION);
+            strcat(response, C_409);
+            strcat(response, CONTENT_TYPE);
+            strcat(response, M_409);
             break;
-        case ERR_OVERFLOW:
+        case E_CUP_COLD:
+            strcpy(response, HTCPCP_VERSION);
+            strcat(response, C_505);
+            strcat(response, CONTENT_TYPE);
+            strcat(response, M_505);
             break;
-        case ERR_TEAPOT:
+        case E_OVERFLOW:
             break;
+
         default:
             break;
     }

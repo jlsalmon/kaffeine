@@ -4,6 +4,7 @@
  *  Created on: Feb 28, 2012
  *      Author: jl2-salmon
  */
+#include <time.h>
 
 #ifndef VCP_H_
 #define VCP_H_
@@ -23,11 +24,14 @@
 #define NUM_POTS 	5
 #define TEAPOT          5
 
-#define ERR_OFF         -1
-#define ERR_BUSY        -2
-#define ERR_CUP_COLD    -3
-#define ERR_OVERFLOW    -4
-#define ERR_TEAPOT      -5
+#define E_OFF           -1
+#define E_BUSY          -2
+#define E_CUP_COLD      -3
+#define E_OVERFLOW      -4
+#define E_TEAPOT        -5
+#define E_STILL_BREWING -6
+#define E_STILL_POURING -7
+
 
 #define VALID_ADDITIONS "Milk types:\tCream, Half-and-half, Whole-milk, Part-skim, Skim, Non-dairy\nSyrup types:\tVanilla, Almond, Raspberry\nSweeteners:\tWhite-sugar, Sweetener, Raw-cane, Honey\nSpice types:\tCinnamon, Cardamom\nAlcohol types:\tBrandy, Rum, Whiskey, Aquavit, Kahlua\nVolume units:\t[1-5], dash, splash, little, medium, lots\n"
 #define BEVERAGE        "               ) (\n              (    )\n             ____(___ \n          _|`--------`| \n         (C|          |__ \n       /` `\\          /  `\\ \n       \\    `========`    / \n        `'--------------'`\n"
@@ -49,18 +53,19 @@ typedef struct {
 typedef struct {
     int pot_id;
     int current_state;
+    time_t brew_end_time;
     pot_state_table states[NUM_STATES][NUM_EVENTS];
 } pot_struct;
 
 int propfind(pot_struct*, char*);
 int brew(pot_struct*, char*);
-int get(pot_struct*, char*);
+int get(pot_struct*, char*, char*);
 int when(pot_struct*);
 
 void off_action();
 void brewing_action(pot_struct*);
 void pouring_action();
-void ready_action();
+void ready_action(pot_struct*);
 void null_action();
 void init_pot(pot_struct*, int);
 
