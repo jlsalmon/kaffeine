@@ -26,8 +26,17 @@ else:
     host = path[0]
 
 # Open socket, connect
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect((host, USR_PORT))
+try:
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+except socket.error, e:
+    sys.exit("Strange error creating socket: %s" % e)
+
+try:
+    s.connect((host, USR_PORT))
+except socket.gaierror, e:
+    sys.exit("Address-related error connecting to server: %s" % e)
+except socket.error, e:
+    sys.exit("Connection error: %s" % e)
 
 print WELCOME_MSG
 
@@ -36,9 +45,10 @@ print WELCOME_MSG
 if len(path) < 3:
     # Initial PROPFIND request
     response = lib.propfind(s, request)
-    print 'Server replies:\n' + response
+    
+    lib.debug(response)
 
-    if not lib.status_code(response):
+    if lib.error_code(response):
         s.close()
         sys.exit('The server could not complete '
                  + 'the request. Program will exit.')
@@ -50,12 +60,13 @@ if len(path) < 3:
 else:
     response = lib.get(s, request)
 
-print 'Server replies:\n' + response
+lib.debug(response)
 
-while True:
+while not lib.error_code(response):
     data = raw_input('Type "get" to collect your coffee: ')
     response = lib.get(s, request)
-    print 'Server replies:\n' + response
+    
+    lib.debug(response)
     
     if data == 'quit':
         s.close()

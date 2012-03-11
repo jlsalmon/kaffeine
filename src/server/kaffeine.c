@@ -20,14 +20,6 @@
 #include "vcp.h"
 #include "kaffeine.h"
 
-typedef struct {
-    pthread_t tid;
-    int sock;
-    int busy;
-} thread_struct;
-
-thread_struct threads[NUM_POTS];
-
 int main(void) {
 
     int sock, tmpsock, curr_thread;
@@ -115,7 +107,7 @@ static void *handle_request(void *tptr) {
     /* receive initial message */
     if ((numbytes = recv(thread->sock, request, MAX_DATA_SIZE - 1, 0)) == -1) {
         perror("recv");
-        pthread_exit((void *) 1);
+        close_thread(thread);
     }
 
     while (strcmp(request, "quit") != 0) {
@@ -128,25 +120,24 @@ static void *handle_request(void *tptr) {
 
         if (send(thread->sock, response, strlen(response), MSG_NOSIGNAL) == -1) {
             perror("send");
-            pthread_exit((void *) 1);
+            close_thread(thread);
         }
 
         memset(&request, 0, sizeof (request));
 
         if ((numbytes = recv(thread->sock, request, MAX_DATA_SIZE - 1, 0)) == -1) {
             perror("recv");
-            pthread_exit((void *) 1);
+            close_thread(thread);
         }
     }
 
     if (send(thread->sock, QUIT_MSG, strlen(QUIT_MSG), MSG_NOSIGNAL) == -1) {
         perror("send");
-        pthread_exit((void *) 1);
+        close_thread(thread);
     }
 
     fprintf(stderr, "Thread %d exiting.\n", (int) pthread_self());
-    close((int) thread->sock);
-    thread->busy = FALSE;
+    close_thread(thread);
     return 0;
 }
 
@@ -318,4 +309,10 @@ int create_tcp_endpoint(int port) {
     }
 
     return sock;
+}
+
+void close_thread(thread_struct* thread) {
+    thread->busy = FALSE;
+    close((int) thread->sock);
+    pthread_exit((void *) 1);
 }

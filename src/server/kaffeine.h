@@ -47,6 +47,14 @@
 #define TRUE 		1
 #define FALSE		0
 
+typedef struct {
+    pthread_t tid;
+    int sock;
+    int busy;
+} thread_struct;
+
+thread_struct threads[NUM_POTS];
+
 static void *handle_request(void *ptr);
 void parse_request(char*, char*);
 int extract_pot_id(char*);
@@ -57,6 +65,7 @@ void get_request(pot_struct*, char*, char*);
 void when_request(pot_struct*, char*);
 
 int create_tcp_endpoint();
+void close_thread(thread_struct*);
 
 #endif	/* KAFFEINE_H */
 

@@ -8,13 +8,15 @@ USR_PORT = 60000
 MSG_BUF_SIZE = 1024
 
 HTCPCP_VERSION = ' HTCPCP/1.0\r\n'
+
+METHOD_PROPFIND = 'PROPFIND '
 METHOD_BREW = 'BREW '
 METHOD_GET = 'GET '
-METHOD_PROPFIND = 'PROPFIND '
 METHOD_WHEN = 'WHEN '
+METHOOD_PUT = 'PUT '
 
 C_SUCCESS = ['200']
-C_ERROR = ['406', '407', '408', '418', '504', '505']
+C_ERROR = ['406', '407', '408', '409', '410', '418', '503', '504', '505']
 
 ACCEPT_ADDS = 'Accept-Additions: '
 CONTENT_TYPE = 'Content-Type: message/coffeepot\r\n\r\n'
@@ -25,3 +27,4 @@ Welcome to kaffeine, the virtual coffee shop of the future!
 Kaffeine uses the HTCPCP protocol to control an array of 
 virtual coffee pots for your enjoyment.
 '''
+DEBUG = True
