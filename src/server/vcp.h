@@ -9,16 +9,17 @@
 #ifndef VCP_H_
 #define VCP_H_
 
-#define STATE_OFF 	0
-#define STATE_READY	1
-#define STATE_BREWING   2
-#define STATE_POURING   3
+#define STATE_READY	0
+#define STATE_BREWING   1
+#define STATE_POURING   2
+#define STATE_WAITING   3
+#define STATE_OFF       4
 #define NUM_STATES 	4
 
 #define EVENT_BREW	0
-#define EVENT_STOP	1
+#define EVENT_STOP	SIGALRM
 #define EVENT_POUR	2
-#define EVENT_READY	3
+#define EVENT_COLLECT	3
 #define NUM_EVENTS	4
 
 #define NUM_POTS 	5
@@ -57,16 +58,20 @@ typedef struct {
     pot_state_table states[NUM_STATES][NUM_EVENTS];
 } pot_struct;
 
+pot_struct pots[NUM_POTS];
+
 int propfind(pot_struct*, char*);
 int brew(pot_struct*, char*);
 int get(pot_struct*, char*, char*);
 int when(pot_struct*);
 
-void off_action();
 void brewing_action(pot_struct*);
 void pouring_action();
+void waiting_action(pthread_t);
 void ready_action(pot_struct*);
+void off_action();
 void null_action();
 void init_pot(pot_struct*, int);
+void catch_alarm(int);
 
 #endif /* VCP_H_ */

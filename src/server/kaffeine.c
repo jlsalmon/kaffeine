@@ -27,7 +27,6 @@ typedef struct {
 } thread_struct;
 
 thread_struct threads[NUM_POTS];
-pot_struct pots[NUM_POTS];
 
 int main(void) {
 
@@ -109,7 +108,7 @@ static void *handle_request(void *tptr) {
     char response[MAX_DATA_SIZE];
     int numbytes;
 
-    printf("Created thread %d\n", (int) pthread_self());
+    printf("Created thread %d\n", (int) thread->tid);
 
     memset(&request, 0, sizeof (request));
 
@@ -152,7 +151,6 @@ static void *handle_request(void *tptr) {
 }
 
 void parse_request(char* request, char* response) {
-
     const char delimiters[] = " :/?";
     char *method, *scheme, *host, *pot_no, *start_line, *header;
     char *rqcpy;
@@ -218,7 +216,6 @@ void propfind_request(pot_struct * pot, char* response) {
 }
 
 void brew_request(pot_struct* pot, char* header, char* response) {
-
     int err = brew(pot, header);
 
     switch (err) {
