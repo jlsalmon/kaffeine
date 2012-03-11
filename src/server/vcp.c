@@ -62,21 +62,27 @@ int get(pot_struct *pot, char* adds, char* response) {
                         [pot->current_state][event].next_state;
             }
             break;
+            
         case EVENT_COLLECT:
-            if (pot->current_state == STATE_BREWING) {
 
-                if (difftime(time(NULL), pot->brew_end_time)
-                        >= (BREWING_TIME + T_TO_COLD)) {
-                    return E_CUP_COLD;
-                } else if (difftime(time(NULL), pot->brew_end_time)
-                        >= BREWING_TIME) {
-                    pot->states[pot->current_state][event].action(pot->pot_id);
-                    pot->current_state = pot->states
-                            [pot->current_state][event].next_state;
-                    strcat(response, BEVERAGE);
-                } else {
+            switch (pot->current_state) {
+                case STATE_BREWING:
                     return E_STILL_BREWING;
-                }
+                    break;
+                    
+                case STATE_WAITING:
+
+                    if (difftime(time(NULL), pot->brew_end_time)
+                            >= (BREWING_TIME + T_TO_COLD)) {
+                        return E_CUP_COLD;
+                    } else {
+
+                        pot->states[pot->current_state][event].action(pot);
+                        pot->current_state = pot->states
+                                [pot->current_state][event].next_state;
+                        strcat(response, BEVERAGE);
+                    }
+                    break;
             }
             break;
     }
@@ -123,19 +129,13 @@ void brewing_action(pot_struct *pot) {
     printf("Brewing on Pot %d...\n", pot->pot_id);
 }
 
-void pouring_action() {
+void pouring_action(pot_struct *pot) {
 
     printf("Pouring...\n");
 }
 
-void waiting_action(pthread_t tid) {
-    for (int i = 0; i < NUM_POTS; ++i) {
-        if (difftime(time(NULL), pots[i].brew_end_time)
-                <= BREWING_TIME) {
-            pots[i].current_state = STATE_WAITING;
-            printf("Coffee waiting for collection on pot %d\n", i);
-        }
-    }
+void waiting_action(pot_struct *pot) {
+
 
 }
 
@@ -145,7 +145,7 @@ void ready_action(pot_struct *pot) {
     printf("Ready\n");
 }
 
-void off_action() {
+void off_action(pot_struct *pot) {
     printf("Switching off\n");
 }
 
@@ -155,6 +155,23 @@ void null_action() {
 
 void catch_alarm(int sig) {
     puts("signal caught");
-    waiting_action(pthread_self());
+    int event = EVENT_STOP;
+
+    for (int i = 0; i < NUM_POTS; ++i) {
+        if (difftime(time(NULL), pots[i].brew_end_time)
+                <= BREWING_TIME) {
+            if (pots[i].current_state == STATE_BREWING
+                    || pots[i].current_state == STATE_POURING) {
+
+                pots[i].states[pots[i].current_state][event].action(&pots[i]);
+                pots[i].current_state = pots[i].states[pots[i].current_state]
+                        [event].next_state;
+
+                printf("Coffee waiting for collection on pot %d\n", i);
+            }
+        }
+    }
+
+
     signal(sig, catch_alarm);
 }

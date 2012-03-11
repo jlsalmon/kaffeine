@@ -17,7 +17,7 @@
 #define NUM_STATES 	4
 
 #define EVENT_BREW	0
-#define EVENT_STOP	SIGALRM
+#define EVENT_STOP	1
 #define EVENT_POUR	2
 #define EVENT_COLLECT	3
 #define NUM_EVENTS	4
@@ -66,10 +66,10 @@ int get(pot_struct*, char*, char*);
 int when(pot_struct*);
 
 void brewing_action(pot_struct*);
-void pouring_action();
-void waiting_action(pthread_t);
+void pouring_action(pot_struct*);
+void waiting_action(pot_struct*);
 void ready_action(pot_struct*);
-void off_action();
+void off_action(pot_struct*);
 void null_action();
 void init_pot(pot_struct*, int);
 void catch_alarm(int);
