@@ -24,18 +24,10 @@ int propfind(pot_struct *pot, char* response) {
 int brew(pot_struct *pot, char* adds) {
     int event = EVENT_BREW;
 
-    if (pot->current_state == STATE_OFF) {
-        return E_OFF;
-    } else if (pot->current_state == STATE_BREWING
-            || pot->current_state == STATE_POURING
-            || pot->current_state == STATE_WAITING) {
-        return E_BUSY;
-    } else if (pot->current_state == STATE_READY) {
-        pot->states[pot->current_state][event].action(pot);
-        pot->current_state = pot->states[pot->current_state]
-                [event].next_state;
-    }
-    return TRUE;
+    pot->states[pot->current_state][event].action(pot);
+    pot->current_state = pot->states[pot->current_state]
+            [event].next_state;
+    return pot->states[pot->current_state][event].error;
 }
 
 int get(pot_struct *pot, char* adds, char* response) {
@@ -54,22 +46,18 @@ int get(pot_struct *pot, char* adds, char* response) {
 
     switch (event) {
         case EVENT_BREW:
-            if (pot->current_state == STATE_BREWING) {
-                return E_BUSY;
-            } else if (pot->current_state == STATE_READY) {
                 pot->states[pot->current_state][event].action(pot->pot_id);
                 pot->current_state = pot->states
                         [pot->current_state][event].next_state;
-            }
-            break;
-            
+                return pot->states[pot->current_state][event].error;
+
         case EVENT_COLLECT:
 
             switch (pot->current_state) {
                 case STATE_BREWING:
                     return E_STILL_BREWING;
                     break;
-                    
+
                 case STATE_WAITING:
 
                     if (difftime(time(NULL), pot->brew_end_time)
@@ -101,25 +89,35 @@ void init_pot(pot_struct *pot, int id) {
 
     for (int j = 0; j < NUM_STATES; ++j) {
         for (int k = 0; k < NUM_EVENTS; ++k) {
-
-            pot->states[j][k].next_state = STATE_OFF;
             pot->states[j][k].action = null_action;
+            pot->states[j][k].error = NULL;
         }
     }
 
     pot->states[STATE_READY][EVENT_BREW].next_state = STATE_BREWING;
     pot->states[STATE_READY][EVENT_BREW].action = brewing_action;
+    pot->states[STATE_READY][EVENT_STOP].error = E_NOT_POURING;
+    pot->states[STATE_READY][EVENT_POUR].error = E_NO_CUP;
+    pot->states[STATE_READY][EVENT_COLLECT].error = E_NO_CUP;
 
     pot->states[STATE_BREWING][EVENT_STOP].next_state = STATE_WAITING;
     pot->states[STATE_BREWING][EVENT_STOP].action = waiting_action;
+    pot->states[STATE_BREWING][EVENT_BREW].error = E_ALRDY_BREWING;
+    pot->states[STATE_BREWING][EVENT_POUR].error = E_STILL_BREWING;
+    pot->states[STATE_BREWING][EVENT_COLLECT].error = E_STILL_BREWING;
 
     pot->states[STATE_WAITING][EVENT_POUR].next_state = STATE_POURING;
     pot->states[STATE_WAITING][EVENT_POUR].action = pouring_action;
     pot->states[STATE_WAITING][EVENT_COLLECT].next_state = STATE_READY;
     pot->states[STATE_WAITING][EVENT_COLLECT].action = ready_action;
+    pot->states[STATE_WAITING][EVENT_BREW].error = E_CUP_WAITING;
+    pot->states[STATE_WAITING][EVENT_STOP].error = E_NOT_POURING;
 
     pot->states[STATE_POURING][EVENT_STOP].next_state = STATE_WAITING;
     pot->states[STATE_POURING][EVENT_STOP].action = waiting_action;
+    pot->states[STATE_POURING][EVENT_BREW].error = E_BUSY;
+    pot->states[STATE_POURING][EVENT_POUR].error = E_ALRDY_POURING;
+    pot->states[STATE_POURING][EVENT_COLLECT].error = E_STILL_POURING;
 }
 
 void brewing_action(pot_struct *pot) {

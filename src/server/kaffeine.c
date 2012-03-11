@@ -111,7 +111,7 @@ static void *handle_request(void *tptr) {
     }
 
     while (strcmp(request, "quit") != 0) {
-
+        
         fprintf(stderr, "Message received: \n%s\n", request);
 
         if (strcmp(request, "\0") != 0) {

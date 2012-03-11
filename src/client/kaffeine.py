@@ -62,7 +62,12 @@ else:
 
 lib.debug(response)
 
-while not lib.error_code(response):
+while True:
+    if lib.error_code(response):
+        s.close()
+        sys.exit('The server could not complete '
+                 + 'the request. Program will exit.')
+        
     data = raw_input('Type "get" to collect your coffee: ')
     response = lib.get(s, request)
     

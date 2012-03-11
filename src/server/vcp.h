@@ -32,7 +32,11 @@
 #define E_TEAPOT        -5
 #define E_STILL_BREWING -6
 #define E_STILL_POURING -7
-
+#define E_CUP_WAITING   -8
+#define E_NOT_POURING   -9
+#define E_NO_CUP        -10
+#define E_ALRDY_BREWING -11
+#define E_ALRDY_POURING -12
 
 #define VALID_ADDITIONS "Milk types:\tCream, Half-and-half, Whole-milk, Part-skim, Skim, Non-dairy\nSyrup types:\tVanilla, Almond, Raspberry\nSweeteners:\tWhite-sugar, Sweetener, Raw-cane, Honey\nSpice types:\tCinnamon, Cardamom\nAlcohol types:\tBrandy, Rum, Whiskey, Aquavit, Kahlua\nVolume units:\t[1-5], dash, splash, little, medium, lots\n"
 #define BEVERAGE        "               ) (\n              (    )\n             ____(___ \n          _|`--------`| \n         (C|          |__ \n       /` `\\          /  `\\ \n       \\    `========`    / \n        `'--------------'`\n"
@@ -48,6 +52,7 @@ typedef void (*tfp) ();
 
 typedef struct {
     int next_state;
+    int error;
     tfp action;
 } pot_state_table;
 
