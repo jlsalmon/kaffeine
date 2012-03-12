@@ -111,7 +111,7 @@ static void *handle_request(void *tptr) {
     }
 
     while (strcmp(request, "quit") != 0) {
-        
+
         fprintf(stderr, "Message received: \n%s\n", request);
 
         if (strcmp(request, "\0") != 0) {
@@ -171,6 +171,15 @@ void parse_request(char* request, char* response) {
 
     fprintf(stderr, "Method: %s, Scheme: %s, Host: %s, Pot: %d\n"
             , method, scheme, host, pot_id);
+
+    if (pots[pot_id].current_thread == 0) {
+        pots[pot_id].current_thread = pthread_self();
+    } else if (!pthread_equal(pots[pot_id].current_thread, pthread_self())) {
+        strcat(response, C_408);
+        strcat(response, CONTENT_TYPE);
+        strcat(response, M_408);
+        return;
+    }
 
     if (strcmp(method, METHOD_PROPFIND) == 0) {
         propfind_request(&pots[pot_id], response);
@@ -312,6 +321,11 @@ int create_tcp_endpoint(int port) {
 }
 
 void close_thread(thread_struct* thread) {
+    for (int i = 0; i < NUM_POTS; ++i) {
+        if (pthread_equal(pots[i].current_thread, pthread_self())) {
+            init_pot(&pots[i], i);
+        }
+    }
     thread->busy = FALSE;
     close((int) thread->sock);
     pthread_exit((void *) 1);

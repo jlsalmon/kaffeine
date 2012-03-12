@@ -49,6 +49,7 @@ if len(path) < 3:
     lib.debug(response)
 
     if lib.error_code(response):
+        s.send('quit')
         s.close()
         sys.exit('The server could not complete '
                  + 'the request. Program will exit.')
@@ -63,19 +64,19 @@ else:
 lib.debug(response)
 
 while True:
-    if lib.error_code(response):
-        s.close()
-        sys.exit('The server could not complete '
-                 + 'the request. Program will exit.')
         
     data = raw_input('Type "get" to collect your coffee: ')
+    
+    if data == 'quit':
+        s.send('quit')
+        s.close()
+        sys.exit('Connection closed. Program will exit.')
+        
     response = lib.get(s, request)
     
     lib.debug(response)
     
-    if data == 'quit':
-        s.close()
-        sys.exit('Connection closed. Program will exit.')
+    
 
 
 

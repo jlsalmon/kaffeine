@@ -58,6 +58,7 @@ typedef struct {
 
 typedef struct {
     int pot_id;
+    pthread_t current_thread;
     int current_state;
     time_t brew_end_time;
     pot_state_table states[NUM_STATES][NUM_EVENTS];

@@ -46,10 +46,10 @@ int get(pot_struct *pot, char* adds, char* response) {
 
     switch (event) {
         case EVENT_BREW:
-                pot->states[pot->current_state][event].action(pot->pot_id);
-                pot->current_state = pot->states
-                        [pot->current_state][event].next_state;
-                return pot->states[pot->current_state][event].error;
+            pot->states[pot->current_state][event].action(pot->pot_id);
+            pot->current_state = pot->states
+                    [pot->current_state][event].next_state;
+            return pot->states[pot->current_state][event].error;
 
         case EVENT_COLLECT:
 
@@ -85,12 +85,13 @@ int when(pot_struct *pot) {
 void init_pot(pot_struct *pot, int id) {
 
     pot->pot_id = id;
+    pot->current_thread = 0;
     pot->current_state = STATE_READY;
 
     for (int j = 0; j < NUM_STATES; ++j) {
         for (int k = 0; k < NUM_EVENTS; ++k) {
             pot->states[j][k].action = null_action;
-            pot->states[j][k].error = NULL;
+            pot->states[j][k].error = FALSE;
         }
     }
 
@@ -118,6 +119,8 @@ void init_pot(pot_struct *pot, int id) {
     pot->states[STATE_POURING][EVENT_BREW].error = E_BUSY;
     pot->states[STATE_POURING][EVENT_POUR].error = E_ALRDY_POURING;
     pot->states[STATE_POURING][EVENT_COLLECT].error = E_STILL_POURING;
+    
+    fprintf(stderr, "Pot %d ready.\n", pot->pot_id);
 }
 
 void brewing_action(pot_struct *pot) {
@@ -128,19 +131,16 @@ void brewing_action(pot_struct *pot) {
 }
 
 void pouring_action(pot_struct *pot) {
-
-    printf("Pouring...\n");
+    printf("Pouring on Pot %d...\n", pot->pot_id);
 }
 
 void waiting_action(pot_struct *pot) {
-
-
+    printf("Coffee waiting for collection on pot %d\n", pot->pot_id);
 }
 
 void ready_action(pot_struct *pot) {
-
-    printf("Pot %d finished brewing.\n", pot->pot_id);
-    printf("Ready\n");
+    printf("Pot %d order complete.\n", pot->pot_id);
+    init_pot(pot, pot->pot_id);
 }
 
 void off_action(pot_struct *pot) {
@@ -153,6 +153,7 @@ void null_action() {
 
 void catch_alarm(int sig) {
     puts("signal caught");
+    signal(sig, catch_alarm);
     int event = EVENT_STOP;
 
     for (int i = 0; i < NUM_POTS; ++i) {
@@ -164,12 +165,7 @@ void catch_alarm(int sig) {
                 pots[i].states[pots[i].current_state][event].action(&pots[i]);
                 pots[i].current_state = pots[i].states[pots[i].current_state]
                         [event].next_state;
-
-                printf("Coffee waiting for collection on pot %d\n", i);
             }
         }
     }
-
-
-    signal(sig, catch_alarm);
 }
