@@ -47,31 +47,28 @@ int get(pot_struct *pot, char* adds, char* response) {
     switch (event) {
         case EVENT_BREW:
             pot->states[pot->current_state][event].action(pot->pot_id);
+            if (pot->states[pot->current_state][event].error) {
+                return pot->states[pot->current_state][event].error;
+            }
             pot->current_state = pot->states
                     [pot->current_state][event].next_state;
-            return pot->states[pot->current_state][event].error;
 
         case EVENT_COLLECT:
 
-            switch (pot->current_state) {
-                case STATE_BREWING:
-                    return E_STILL_BREWING;
-                    break;
+            if (difftime(time(NULL), pot->brew_end_time)
+                    >= (BREWING_TIME + T_TO_COLD)) {
+                return E_CUP_COLD;
+            } else {
 
-                case STATE_WAITING:
-
-                    if (difftime(time(NULL), pot->brew_end_time)
-                            >= (BREWING_TIME + T_TO_COLD)) {
-                        return E_CUP_COLD;
-                    } else {
-
-                        pot->states[pot->current_state][event].action(pot);
-                        pot->current_state = pot->states
-                                [pot->current_state][event].next_state;
-                        strcat(response, BEVERAGE);
-                    }
-                    break;
+                pot->states[pot->current_state][event].action(pot);
+                if (pot->states[pot->current_state][event].error) {
+                    return pot->states[pot->current_state][event].error;
+                }
+                init_pot(pot, pot->pot_id);
+                strcat(response, BEVERAGE);
             }
+            break;
+        default:
             break;
     }
     return TRUE;
@@ -119,7 +116,7 @@ void init_pot(pot_struct *pot, int id) {
     pot->states[STATE_POURING][EVENT_BREW].error = E_BUSY;
     pot->states[STATE_POURING][EVENT_POUR].error = E_ALRDY_POURING;
     pot->states[STATE_POURING][EVENT_COLLECT].error = E_STILL_POURING;
-    
+
     fprintf(stderr, "Pot %d ready.\n", pot->pot_id);
 }
 
@@ -140,7 +137,6 @@ void waiting_action(pot_struct *pot) {
 
 void ready_action(pot_struct *pot) {
     printf("Pot %d order complete.\n", pot->pot_id);
-    init_pot(pot, pot->pot_id);
 }
 
 void off_action(pot_struct *pot) {

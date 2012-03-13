@@ -25,18 +25,18 @@
 #define NUM_POTS 	5
 #define TEAPOT          5
 
-#define E_OFF           -1
-#define E_BUSY          -2
-#define E_CUP_COLD      -3
-#define E_OVERFLOW      -4
-#define E_TEAPOT        -5
-#define E_STILL_BREWING -6
-#define E_STILL_POURING -7
-#define E_CUP_WAITING   -8
-#define E_NOT_POURING   -9
-#define E_NO_CUP        -10
-#define E_ALRDY_BREWING -11
-#define E_ALRDY_POURING -12
+#define E_TEAPOT        418
+#define E_OFF           419
+#define E_BUSY          420
+#define E_STILL_BREWING 421
+#define E_STILL_POURING 422
+#define E_ALRDY_BREWING 423
+#define E_ALRDY_POURING 424
+#define E_NOT_POURING   425
+#define E_CUP_WAITING   426
+#define E_NO_CUP        427
+#define E_OVERFLOW      504
+#define E_CUP_COLD      505
 
 #define VALID_ADDITIONS "Milk types:\tCream, Half-and-half, Whole-milk, Part-skim, Skim, Non-dairy\nSyrup types:\tVanilla, Almond, Raspberry\nSweeteners:\tWhite-sugar, Sweetener, Raw-cane, Honey\nSpice types:\tCinnamon, Cardamom\nAlcohol types:\tBrandy, Rum, Whiskey, Aquavit, Kahlua\nVolume units:\t[1-5], dash, splash, little, medium, lots\n"
 #define BEVERAGE        "               ) (\n              (    )\n             ____(___ \n          _|`--------`| \n         (C|          |__ \n       /` `\\          /  `\\ \n       \\    `========`    / \n        `'--------------'`\n"

@@ -40,6 +40,7 @@ int main(void) {
         init_pot(&pots[i], i);
     }
     fprintf(stderr, "Pots initialised.\n");
+    fprintf(stderr, "Accepting connections on port %d.\n", USR_PORT);
 
     /* main accept() loop */
     while (1) {
@@ -157,15 +158,15 @@ void parse_request(char* request, char* response) {
 
     strcpy(response, HTCPCP_VERSION);
 
-    if (pot_id == TEAPOT) {
+    if (pot_id > NUM_POTS || pot_id < 0) {
+        strcat(response, C_404);
+        strcat(response, CONTENT_TYPE);
+        strcat(response, M_404);
+        return;
+    } else if (pot_id == TEAPOT) {
         strcat(response, C_418);
         strcat(response, CONTENT_TYPE);
         strcat(response, M_418);
-        return;
-    } else if (pot_id > NUM_POTS || pot_id < 0) {
-        strcat(response, C_406);
-        strcat(response, CONTENT_TYPE);
-        strcat(response, M_406);
         return;
     }
 
@@ -175,9 +176,9 @@ void parse_request(char* request, char* response) {
     if (pots[pot_id].current_thread == 0) {
         pots[pot_id].current_thread = pthread_self();
     } else if (!pthread_equal(pots[pot_id].current_thread, pthread_self())) {
-        strcat(response, C_408);
+        strcat(response, C_420);
         strcat(response, CONTENT_TYPE);
-        strcat(response, M_408);
+        strcat(response, M_420);
         return;
     }
 
@@ -200,15 +201,6 @@ void parse_request(char* request, char* response) {
     return;
 }
 
-int extract_pot_id(char* pot_no) {
-    const char delimiters[] = "-";
-    char *head, *s_id;
-
-    head = strtok(pot_no, delimiters);
-    s_id = strtok(NULL, delimiters);
-    return atoi(s_id);
-}
-
 void propfind_request(pot_struct * pot, char* response) {
     strcat(response, C_200);
     strcat(response, CONTENT_TYPE);
@@ -217,62 +209,16 @@ void propfind_request(pot_struct * pot, char* response) {
 
 void brew_request(pot_struct* pot, char* header, char* response) {
     int err = brew(pot, header);
-
-    switch (err) {
-        case E_OFF:
-            strcat(response, C_407);
-            strcat(response, CONTENT_TYPE);
-            strcat(response, M_407);
-            break;
-        case E_BUSY:
-            strcat(response, C_408);
-            strcat(response, CONTENT_TYPE);
-            strcat(response, M_408);
-            break;
-        default:
-            strcat(response, C_200);
-            strcat(response, CONTENT_TYPE);
-            strcat(response, M_200_START);
-            break;
-    }
+    build_err_response(response, err);
 }
 
 void get_request(pot_struct* pot, char* adds, char* response) {
-
     strcat(response, C_200);
     strcat(response, CONTENT_TYPE);
+
     int err = get(pot, adds, response);
-
-    switch (err) {
-        case E_OFF:
-            strcpy(response, HTCPCP_VERSION);
-            strcat(response, C_407);
-            strcat(response, CONTENT_TYPE);
-            strcat(response, M_407);
-            break;
-        case E_BUSY:
-            strcpy(response, HTCPCP_VERSION);
-            strcat(response, C_408);
-            strcat(response, CONTENT_TYPE);
-            strcat(response, M_408);
-            break;
-        case E_STILL_BREWING:
-            strcpy(response, HTCPCP_VERSION);
-            strcat(response, C_409);
-            strcat(response, CONTENT_TYPE);
-            strcat(response, M_409);
-            break;
-        case E_CUP_COLD:
-            strcpy(response, HTCPCP_VERSION);
-            strcat(response, C_505);
-            strcat(response, CONTENT_TYPE);
-            strcat(response, M_505);
-            break;
-        case E_OVERFLOW:
-            break;
-
-        default:
-            break;
+    if (err) {
+        build_err_response(response, err);
     }
 }
 
@@ -280,6 +226,79 @@ void when_request(pot_struct* pot, char* response) {
 
     strcpy(response, HTCPCP_VERSION);
     strcat(response, C_200);
+}
+
+void build_err_response(char* response, int err) {
+    strcpy(response, HTCPCP_VERSION);
+
+    switch (err) {
+        case E_OFF:
+            strcat(response, C_419);
+            strcat(response, CONTENT_TYPE);
+            strcat(response, M_419);
+            break;
+        case E_BUSY:
+            strcat(response, C_420);
+            strcat(response, CONTENT_TYPE);
+            strcat(response, M_420);
+            break;
+        case E_STILL_BREWING:
+            strcat(response, C_421);
+            strcat(response, CONTENT_TYPE);
+            strcat(response, M_421);
+            break;
+        case E_STILL_POURING:
+            strcat(response, C_422);
+            strcat(response, CONTENT_TYPE);
+            strcat(response, M_422);
+            break;
+        case E_ALRDY_BREWING:
+            strcat(response, C_423);
+            strcat(response, CONTENT_TYPE);
+            strcat(response, M_423);
+            break;
+        case E_ALRDY_POURING:
+            strcat(response, C_424);
+            strcat(response, CONTENT_TYPE);
+            strcat(response, M_424);
+            break;
+        case E_NOT_POURING:
+            strcat(response, C_425);
+            strcat(response, CONTENT_TYPE);
+            strcat(response, M_425);
+            break;
+        case E_CUP_WAITING:
+            strcat(response, C_426);
+            strcat(response, CONTENT_TYPE);
+            strcat(response, M_426);
+            break;
+        case E_NO_CUP:
+            strcat(response, C_427);
+            strcat(response, CONTENT_TYPE);
+            strcat(response, M_427);
+            break;
+        case E_OVERFLOW:
+            strcat(response, C_504);
+            strcat(response, CONTENT_TYPE);
+            strcat(response, M_504);
+            break;
+        case E_CUP_COLD:
+            strcat(response, C_505);
+            strcat(response, CONTENT_TYPE);
+            strcat(response, M_505);
+            break;
+        default:
+            break;
+    }
+}
+
+int extract_pot_id(char* pot_no) {
+    const char delimiters[] = "-";
+    char *head, *s_id;
+
+    head = strtok(pot_no, delimiters);
+    s_id = strtok(NULL, delimiters);
+    return atoi(s_id);
 }
 
 /* Useful function to create server endpoint */
