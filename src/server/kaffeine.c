@@ -208,16 +208,23 @@ void propfind_request(pot_struct * pot, char* response) {
 }
 
 void brew_request(pot_struct* pot, char* header, char* response) {
-    int err = brew(pot, header);
-    build_err_response(response, err);
+    int err;
+    if ((err = brew(pot, header))) {
+        build_err_response(response, err);
+    } else {
+        strcat(response, C_200);
+        strcat(response, CONTENT_TYPE);
+        strcat(response, M_200_START);
+    }
 }
 
 void get_request(pot_struct* pot, char* adds, char* response) {
+    int err;
+    
     strcat(response, C_200);
     strcat(response, CONTENT_TYPE);
 
-    int err = get(pot, adds, response);
-    if (err) {
+    if ((err = get(pot, adds, response))) {
         build_err_response(response, err);
     }
 }
@@ -232,6 +239,11 @@ void build_err_response(char* response, int err) {
     strcpy(response, HTCPCP_VERSION);
 
     switch (err) {
+        case E_INVALID_ADDS:
+            strcat(response, C_406);
+            strcat(response, CONTENT_TYPE);
+            strcat(response, M_406);
+            break;
         case E_OFF:
             strcat(response, C_419);
             strcat(response, CONTENT_TYPE);

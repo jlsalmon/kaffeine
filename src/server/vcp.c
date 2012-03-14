@@ -17,17 +17,25 @@ int propfind(pot_struct *pot, char* response) {
     char val_adds[30];
     sprintf(val_adds, "Valid additions for Pot %d: \n\n", pot->pot_id);
     strcat(response, val_adds);
-    strcat(response, VALID_ADDITIONS);
+    strcat(response, VAL_ADDS_STR);
     return TRUE;
 }
 
 int brew(pot_struct *pot, char* adds) {
     int event = EVENT_BREW;
 
+    if (!validate_adds(adds)) {
+        return E_INVALID_ADDS;
+    }
+
     pot->states[pot->current_state][event].action(pot);
+    if (pot->states[pot->current_state][event].error) {
+        return pot->states[pot->current_state][event].error;
+    }
     pot->current_state = pot->states[pot->current_state]
             [event].next_state;
-    return pot->states[pot->current_state][event].error;
+
+    return SUCCESS;
 }
 
 int get(pot_struct *pot, char* adds, char* response) {
@@ -71,53 +79,12 @@ int get(pot_struct *pot, char* adds, char* response) {
         default:
             break;
     }
-    return TRUE;
+    return SUCCESS;
 }
 
 int when(pot_struct *pot) {
 
     return TRUE;
-}
-
-void init_pot(pot_struct *pot, int id) {
-
-    pot->pot_id = id;
-    pot->current_thread = 0;
-    pot->current_state = STATE_READY;
-
-    for (int j = 0; j < NUM_STATES; ++j) {
-        for (int k = 0; k < NUM_EVENTS; ++k) {
-            pot->states[j][k].action = null_action;
-            pot->states[j][k].error = FALSE;
-        }
-    }
-
-    pot->states[STATE_READY][EVENT_BREW].next_state = STATE_BREWING;
-    pot->states[STATE_READY][EVENT_BREW].action = brewing_action;
-    pot->states[STATE_READY][EVENT_STOP].error = E_NOT_POURING;
-    pot->states[STATE_READY][EVENT_POUR].error = E_NO_CUP;
-    pot->states[STATE_READY][EVENT_COLLECT].error = E_NO_CUP;
-
-    pot->states[STATE_BREWING][EVENT_STOP].next_state = STATE_WAITING;
-    pot->states[STATE_BREWING][EVENT_STOP].action = waiting_action;
-    pot->states[STATE_BREWING][EVENT_BREW].error = E_ALRDY_BREWING;
-    pot->states[STATE_BREWING][EVENT_POUR].error = E_STILL_BREWING;
-    pot->states[STATE_BREWING][EVENT_COLLECT].error = E_STILL_BREWING;
-
-    pot->states[STATE_WAITING][EVENT_POUR].next_state = STATE_POURING;
-    pot->states[STATE_WAITING][EVENT_POUR].action = pouring_action;
-    pot->states[STATE_WAITING][EVENT_COLLECT].next_state = STATE_READY;
-    pot->states[STATE_WAITING][EVENT_COLLECT].action = ready_action;
-    pot->states[STATE_WAITING][EVENT_BREW].error = E_CUP_WAITING;
-    pot->states[STATE_WAITING][EVENT_STOP].error = E_NOT_POURING;
-
-    pot->states[STATE_POURING][EVENT_STOP].next_state = STATE_WAITING;
-    pot->states[STATE_POURING][EVENT_STOP].action = waiting_action;
-    pot->states[STATE_POURING][EVENT_BREW].error = E_BUSY;
-    pot->states[STATE_POURING][EVENT_POUR].error = E_ALRDY_POURING;
-    pot->states[STATE_POURING][EVENT_COLLECT].error = E_STILL_POURING;
-
-    fprintf(stderr, "Pot %d ready.\n", pot->pot_id);
 }
 
 void brewing_action(pot_struct *pot) {
@@ -164,4 +131,113 @@ void catch_alarm(int sig) {
             }
         }
     }
+}
+
+int validate_adds(char* adds) {
+    fprintf(stderr, "%s\n", adds);
+
+    const char delimiters[] = " &";
+    char *header, *add = NULL, *type = NULL, *quant = NULL;
+    char *adds_arr[MAX_ADDS];
+    int i = 0;
+
+    header = strtok(adds, delimiters);
+    add = strtok(NULL, delimiters);
+    adds_arr[i++] = add;
+
+    while (add != NULL) {
+        printf("add = \"%s\"\n", add);
+        add = strtok(NULL, delimiters);
+
+        if (i == MAX_ADDS - 1) {
+            return FALSE;
+        }
+        adds_arr[i++] = add;
+    }
+
+    for (int i = 0; i < MAX_ADDS; ++i) {
+        if (adds_arr[i] == NULL) break;
+        fprintf(stderr, "add: %s\n", adds_arr[i]);
+        type = strtok(adds_arr[i], "=");
+        quant = strtok(NULL, "=");
+
+        if (!valid_add(type) || !valid_quant(quant)) {
+            return FALSE;
+        }
+
+        fprintf(stderr, "type: %s\n", type);
+        fprintf(stderr, "quant: %s\n", quant);
+    }
+
+    return TRUE;
+}
+
+int valid_add(char* add) {
+    char* val_adds[] = VAL_ADDS_ARR;
+/*
+    char *ptr = NULL;
+
+    if (add != NULL) {
+        ptr = strstr(VALID_ADDS_STR, add);
+    }
+
+    if (ptr != NULL) {
+        printf("We found the string: %s\n", ptr);
+    } else {
+        printf("No pancakes have been found, we're so sorry\n");
+        return FALSE;
+    }
+*/
+    
+    for (int i = 0; i < VAL_ADDS_ARR_LEN; i++) {
+        if (strcasecmp(add, val_adds[i]) == 0) {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+int valid_quant(char* quant) {
+    return TRUE;
+}
+
+void init_pot(pot_struct *pot, int id) {
+
+    pot->pot_id = id;
+    pot->current_thread = 0;
+    pot->current_state = STATE_READY;
+
+    for (int j = 0; j < NUM_STATES; ++j) {
+        for (int k = 0; k < NUM_EVENTS; ++k) {
+            pot->states[j][k].action = null_action;
+            pot->states[j][k].error = FALSE;
+        }
+    }
+
+    pot->states[STATE_READY][EVENT_BREW].next_state = STATE_BREWING;
+    pot->states[STATE_READY][EVENT_BREW].action = brewing_action;
+    pot->states[STATE_READY][EVENT_STOP].error = E_NOT_POURING;
+    pot->states[STATE_READY][EVENT_POUR].error = E_NO_CUP;
+    pot->states[STATE_READY][EVENT_COLLECT].error = E_NO_CUP;
+
+    pot->states[STATE_BREWING][EVENT_STOP].next_state = STATE_WAITING;
+    pot->states[STATE_BREWING][EVENT_STOP].action = waiting_action;
+    pot->states[STATE_BREWING][EVENT_BREW].error = E_ALRDY_BREWING;
+    pot->states[STATE_BREWING][EVENT_POUR].error = E_STILL_BREWING;
+    pot->states[STATE_BREWING][EVENT_COLLECT].error = E_STILL_BREWING;
+
+    pot->states[STATE_WAITING][EVENT_POUR].next_state = STATE_POURING;
+    pot->states[STATE_WAITING][EVENT_POUR].action = pouring_action;
+    pot->states[STATE_WAITING][EVENT_COLLECT].next_state = STATE_READY;
+    pot->states[STATE_WAITING][EVENT_COLLECT].action = ready_action;
+    pot->states[STATE_WAITING][EVENT_BREW].error = E_CUP_WAITING;
+    pot->states[STATE_WAITING][EVENT_STOP].error = E_NOT_POURING;
+
+    pot->states[STATE_POURING][EVENT_STOP].next_state = STATE_WAITING;
+    pot->states[STATE_POURING][EVENT_STOP].action = waiting_action;
+    pot->states[STATE_POURING][EVENT_BREW].error = E_BUSY;
+    pot->states[STATE_POURING][EVENT_POUR].error = E_ALRDY_POURING;
+    pot->states[STATE_POURING][EVENT_COLLECT].error = E_STILL_POURING;
+
+    fprintf(stderr, "Pot %d ready.\n", pot->pot_id);
 }

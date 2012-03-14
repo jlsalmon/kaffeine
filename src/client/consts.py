@@ -16,7 +16,9 @@ METHOD_WHEN = 'WHEN '
 METHOOD_PUT = 'PUT '
 
 C_SUCCESS = ['200']
-C_ERROR = ['406', '407', '408', '409', '410', '418', '503', '504', '505']
+C_ERROR = ['404', '406', '418', '419', '420', 
+           '421', '422', '423', '424', '425', 
+           '426', '427', '503', '504', '505']
 
 ACCEPT_ADDS = 'Accept-Additions: '
 CONTENT_TYPE = 'Content-Type: message/coffeepot\r\n\r\n'

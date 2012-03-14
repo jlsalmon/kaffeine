@@ -25,6 +25,7 @@
 #define NUM_POTS 	5
 #define TEAPOT          5
 
+#define E_INVALID_ADDS  406
 #define E_TEAPOT        418
 #define E_OFF           419
 #define E_BUSY          420
@@ -38,15 +39,20 @@
 #define E_OVERFLOW      504
 #define E_CUP_COLD      505
 
-#define VALID_ADDITIONS "Milk types:\tCream, Half-and-half, Whole-milk, Part-skim, Skim, Non-dairy\nSyrup types:\tVanilla, Almond, Raspberry\nSweeteners:\tWhite-sugar, Sweetener, Raw-cane, Honey\nSpice types:\tCinnamon, Cardamom\nAlcohol types:\tBrandy, Rum, Whiskey, Aquavit, Kahlua\nVolume units:\t[1-5], dash, splash, little, medium, lots\n"
+#define VAL_ADDS_STR    "Milk types:\tCream, Half-and-half, Whole-milk, Part-skim, Skim, Non-dairy\nSyrup types:\tVanilla, Almond, Raspberry\nSweeteners:\tWhite-sugar, Sweetener, Raw-cane, Honey\nSpice types:\tCinnamon, Cardamom\nAlcohol types:\tBrandy, Rum, Whiskey, Aquavit, Kahlua\nVolume units:\t[1-5], dash, splash, little, medium, lots\n"
+#define VAL_ADDS_ARR    {"Cream", "Half-and-half", "Whole-milk", "Part-skim", "Skim", "Non-dairy", "Vanilla", "Almond", "Raspberry", "White-sugar", "Sweetener", "Raw-cane", "Honey", "Cinnamon", "Cardamom", "Brandy", "Whiskey", "Rum", "Aquavit", "Kahlua" , "dash", "spalsh", "little", "medium", "lots"}
+#define VAL_ADDS_ARR_LEN 25
 #define BEVERAGE        "               ) (\n              (    )\n             ____(___ \n          _|`--------`| \n         (C|          |__ \n       /` `\\          /  `\\ \n       \\    `========`    / \n        `'--------------'`\n"
 
-#define BREWING_TIME    20
+#define BREWING_TIME    5
 #define T_TO_COLD       60
 #define T_TO_OVERFLOW   10
+#define MAX_ADDS        5
 
 #define TRUE            1
 #define FALSE           0
+#define SUCCESS         0
+#define FAILURE         1
 
 typedef void (*tfp) ();
 
@@ -77,7 +83,11 @@ void waiting_action(pot_struct*);
 void ready_action(pot_struct*);
 void off_action(pot_struct*);
 void null_action();
-void init_pot(pot_struct*, int);
 void catch_alarm(int);
+
+int validate_adds(char*);
+int valid_add(char*);
+int valid_quant(char*);
+void init_pot(pot_struct*, int);
 
 #endif /* VCP_H_ */
