@@ -8,17 +8,20 @@ Main entry point for kaffeine client.
 
 import socket
 import sys
-import lib
-from consts import *
+from lib import *
 
 # Check args
-if len(sys.argv) < 2:
-    sys.exit('usage: kaffeine.py request-uri')
+if len(sys.argv) < 2 or len(sys.argv) > 3:
+    sys.exit('usage: kaffeine.py request-uri [arguments]')
 else:
     request = sys.argv[1]
-
+if len(sys.argv) == 3:
+    arg = sys.argv[2]
+    if not valid_arg(arg):
+        sys.exit('unknown argument ' + arg)
+    
 # Check request-uri is valid
-if not lib.valid_url(request):
+if not valid_url(request):
     sys.exit('Invalid request-uri structure')
 else:
     parts = request.partition('://')
@@ -44,24 +47,24 @@ print WELCOME_MSG
 # supplied, method will be BREW, otherwise it will be GET
 if len(path) < 3:
     # Initial PROPFIND request
-    response = lib.propfind(s, request)
+    response = propfind(s, request)
     
-    lib.debug(response)
+    debug(response)
 
-    if lib.error_code(response):
+    if error_code(response):
         s.send('quit')
         s.close()
         sys.exit('The server could not complete '
                  + 'the request. Program will exit.')
 
-    order = lib.get_order()
+    order = get_order()
     print order
-    response = lib.brew(s, request, order)
+    response = brew(s, request, order)
     
 else:
-    response = lib.get(s, request)
+    response = get(s, request)
 
-lib.debug(response)
+debug(response)
 
 while True:
         
@@ -72,9 +75,15 @@ while True:
         s.close()
         sys.exit('Connection closed. Program will exit.')
         
-    response = lib.get(s, request)
+    response = get(s, request)
     
-    lib.debug(response)
+    debug(response)
+    
+    if error_code(response):
+        s.send('quit')
+        s.close()
+        sys.exit('The server could not complete '
+                 + 'the request. Program will exit.')
     
     
 

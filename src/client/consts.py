@@ -6,6 +6,8 @@ Created on 29 Feb 2012
 
 USR_PORT = 60000
 MSG_BUF_SIZE = 1024
+VALID_ARGS = ['-v']
+DEBUG = False
 
 HTCPCP_VERSION = ' HTCPCP/1.0\r\n'
 
@@ -29,4 +31,3 @@ Welcome to kaffeine, the virtual coffee shop of the future!
 Kaffeine uses the HTCPCP protocol to control an array of 
 virtual coffee pots for your enjoyment.
 '''
-DEBUG = True

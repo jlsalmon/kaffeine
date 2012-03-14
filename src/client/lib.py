@@ -30,7 +30,7 @@ def when():
 def send_msg(s, msg):
     try:
         s.send(msg)
-        print 'Sent:\n' + msg
+        debug(msg, 'Sent:\n')
     except socket.error, e:
         sys.exit("Error sending data: %s" % e)
 
@@ -40,6 +40,12 @@ def recv_msg(s):
     except socket.error, e:
         sys.exit("Error receiving data: %s" % e)
     return buf
+    
+def extract_body(msg):
+    parts = msg.split('\r\n')
+    if len(parts) >=3:
+        return parts[3]
+    else: return ""
     
 def error_code(msg):
     parts = msg.split(' ')
@@ -65,6 +71,15 @@ def valid_url(url):
             return False
     return True
 
+def valid_arg(arg):
+    global DEBUG
+    for a in VALID_ARGS:
+        if re.match(arg, a):
+            DEBUG = True
+            return True
+    DEBUG = False
+    return False
+    
 def get_order():
     if re.match(get_yn_input("Would you like any additions?"), 'y'):
         order = raw_input('Enter addition string: ')
@@ -78,6 +93,7 @@ def get_yn_input(prompt):
         input = raw_input('Please answer y or n: ')
     return input
 
-def debug(msg):
-    if DEBUG:
-        print 'Server replies:\n' + msg
+def debug(msg, prefix = 'Server replies:\n'):
+    if DEBUG == True:
+        print prefix + msg
+    else: print extract_body(msg)
