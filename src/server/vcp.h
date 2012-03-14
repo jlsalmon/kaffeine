@@ -40,11 +40,11 @@
 #define E_CUP_COLD      505
 
 #define VAL_ADDS_STR    "Milk types:\tCream, Half-and-half, Whole-milk, Part-skim, Skim, Non-dairy\nSyrup types:\tVanilla, Almond, Raspberry\nSweeteners:\tWhite-sugar, Sweetener, Raw-cane, Honey\nSpice types:\tCinnamon, Cardamom\nAlcohol types:\tBrandy, Rum, Whiskey, Aquavit, Kahlua\nVolume units:\t[1-5], dash, splash, little, medium, lots\n"
-#define VAL_ADDS_ARR    {"Cream", "Half-and-half", "Whole-milk", "Part-skim", "Skim", "Non-dairy", "Vanilla", "Almond", "Raspberry", "White-sugar", "Sweetener", "Raw-cane", "Honey", "Cinnamon", "Cardamom", "Brandy", "Whiskey", "Rum", "Aquavit", "Kahlua" , "dash", "spalsh", "little", "medium", "lots"}
-#define VAL_ADDS_ARR_LEN 25
+#define VAL_ADDS_ARR    {"Cream", "Half-and-half", "Whole-milk", "Part-skim", "Skim", "Non-dairy", "Vanilla", "Almond", "Raspberry", "White-sugar", "Sweetener", "Raw-cane", "Honey", "Cinnamon", "Cardamom", "Brandy", "Whiskey", "Rum", "Aquavit", "Kahlua" , "dash", "spalsh", "little", "medium", "lots", "1", "2", "3", "4", "5"}
+#define VAL_ADDS_ARR_LEN 30
 #define BEVERAGE        "               ) (\n              (    )\n             ____(___ \n          _|`--------`| \n         (C|          |__ \n       /` `\\          /  `\\ \n       \\    `========`    / \n        `'--------------'`\n"
 
-#define BREWING_TIME    5
+#define BREWING_TIME    10
 #define T_TO_COLD       60
 #define T_TO_OVERFLOW   10
 #define MAX_ADDS        5
@@ -87,7 +87,6 @@ void catch_alarm(int);
 
 int validate_adds(char*);
 int valid_add(char*);
-int valid_quant(char*);
 void init_pot(pot_struct*, int);
 
 #endif /* VCP_H_ */

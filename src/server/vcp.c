@@ -161,7 +161,7 @@ int validate_adds(char* adds) {
         type = strtok(adds_arr[i], "=");
         quant = strtok(NULL, "=");
 
-        if (!valid_add(type) || !valid_quant(quant)) {
+        if (!valid_add(type) || !valid_add(quant)) {
             return FALSE;
         }
 
@@ -174,31 +174,13 @@ int validate_adds(char* adds) {
 
 int valid_add(char* add) {
     char* val_adds[] = VAL_ADDS_ARR;
-/*
-    char *ptr = NULL;
-
-    if (add != NULL) {
-        ptr = strstr(VALID_ADDS_STR, add);
-    }
-
-    if (ptr != NULL) {
-        printf("We found the string: %s\n", ptr);
-    } else {
-        printf("No pancakes have been found, we're so sorry\n");
-        return FALSE;
-    }
-*/
-    
+  
     for (int i = 0; i < VAL_ADDS_ARR_LEN; i++) {
         if (strcasecmp(add, val_adds[i]) == 0) {
             return TRUE;
         }
     }
     return FALSE;
-}
-
-int valid_quant(char* quant) {
-    return TRUE;
 }
 
 void init_pot(pot_struct *pot, int id) {

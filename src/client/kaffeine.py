@@ -48,10 +48,10 @@ print WELCOME_MSG
 if len(path) < 3:
     # Initial PROPFIND request
     response = propfind(s, request)
-    
     debug(response)
-
-    if error_code(response):
+    c = status_code(response)
+    
+    if c['error']:
         s.send('quit')
         s.close()
         sys.exit('The server could not complete '
@@ -65,25 +65,38 @@ else:
     response = get(s, request)
 
 debug(response)
-
-while True:
-        
-    data = raw_input('Type "get" to collect your coffee: ')
-    
-    if data == 'quit':
-        s.send('quit')
-        s.close()
-        sys.exit('Connection closed. Program will exit.')
-        
-    response = get(s, request)
-    
-    debug(response)
-    
-    if error_code(response):
+c = status_code(response)
+if c['error']:
         s.send('quit')
         s.close()
         sys.exit('The server could not complete '
                  + 'the request. Program will exit.')
+
+data = raw_input('Type "get" to collect your coffee: ')
+ 
+while not data == 'get':
+    if data == 'quit':
+        s.send('quit')
+        s.close()
+        sys.exit('Connection closed. Program will exit.')
+    data = raw_input('Type "get" to collect your coffee: ')  
+
+while True:
+    response = get(s, request)   
+    debug(response)
+    c = status_code(response)
+    
+    if c['code'] == '200':
+        s.send('quit')
+        s.close()
+        sys.exit('Thank you for using kaffeine. We look forward'
+                 + ' to quenching your digital thirst again.')
+    if not c['code'] == '421':
+        s.send('quit')
+        s.close()
+        sys.exit('The server could not complete '
+                 + 'the request. Program will exit.')
+    data = raw_input('Type "get" to collect your coffee: ')  
     
     
 

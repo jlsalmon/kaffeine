@@ -47,12 +47,14 @@ def extract_body(msg):
         return parts[3]
     else: return ""
     
-def error_code(msg):
+def status_code(msg):
     parts = msg.split(' ')
     for c in C_ERROR:
         if re.match(parts[1], c):
-            return True
-    return False
+            return { 'error' : True, 'code' : c}
+    for c in C_SUCCESS:
+        if re.match(parts[1], c):
+            return { 'error' : False, 'code' : c}
 
 def valid_url(url):
     parts = url.partition('://')
