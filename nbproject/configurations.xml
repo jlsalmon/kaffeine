@@ -52,7 +52,7 @@
       </toolsSet>
       <compileType>
         <cTool>
-          <commandLine>-D_GNU_SOURCE -std=c99 -pthread -Wall</commandLine>
+          <commandLine>-D_GNU_SOURCE -std=c99 -pthread -Wall -fno-builtin-log</commandLine>
           <warningLevel>2</warningLevel>
         </cTool>
       </compileType>

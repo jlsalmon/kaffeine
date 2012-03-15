@@ -29,5 +29,4 @@ MSG_BODY = 'Start'
 WELCOME_MSG = '''
 Welcome to kaffeine, the virtual coffee shop of the future!
 Kaffeine uses the HTCPCP protocol to control an array of 
-virtual coffee pots for your enjoyment.
-'''
+virtual coffee pots for your enjoyment.'''

@@ -9,18 +9,25 @@ import sys
 from consts import *
 
 def propfind(sock, request):
-    msg = METHOD_PROPFIND + request + HTCPCP_VERSION
+    msg = METHOD_PROPFIND + '/' + request + HTCPCP_VERSION
     send_msg(sock, msg)
     return recv_msg(sock)
     
-def brew(sock, request, order):
-    msg = METHOD_BREW + request + HTCPCP_VERSION \
-        + ACCEPT_ADDS + order + CONTENT_TYPE + MSG_BODY
+def brew(sock, pot, order):
+    if not order == '':
+        msg = METHOD_BREW + '/' + pot + HTCPCP_VERSION \
+            + ACCEPT_ADDS + order + CONTENT_TYPE + MSG_BODY
+    else:
+        msg = METHOD_BREW + '/' + pot + HTCPCP_VERSION \
+            + CONTENT_TYPE + MSG_BODY
     send_msg(sock, msg)
     return recv_msg(sock)
     
-def get(sock, request):
-    msg = METHOD_GET + request + HTCPCP_VERSION
+def get(sock, pot, adds):
+    if not adds:
+        msg = METHOD_GET + '/' + pot + HTCPCP_VERSION
+    else:
+        msg = METHOD_GET + '/' + pot + '/' + adds + HTCPCP_VERSION
     send_msg(sock, msg)
     return recv_msg(sock)
     
@@ -41,6 +48,12 @@ def recv_msg(s):
         sys.exit("Error receiving data: %s" % e)
     return buf
     
+def close_sock(s, msg):
+    s.send('quit')
+    print s.recv(MSG_BUF_SIZE)
+    s.close()
+    sys.exit(msg)
+    
 def extract_body(msg):
     parts = msg.split('\r\n')
     if len(parts) >=3:
@@ -57,7 +70,7 @@ def status_code(msg):
             return { 'error' : False, 'code' : c}
 
 def valid_url(url):
-    parts = url.partition('://')
+    parts = url[0].partition('://')
     if not re.match('coffee', parts[0]):
         return False 
     path = parts[2].split('/')
@@ -74,12 +87,9 @@ def valid_url(url):
     return True
 
 def valid_arg(arg):
-    global DEBUG
     for a in VALID_ARGS:
         if re.match(arg, a):
-            DEBUG = True
             return True
-    DEBUG = False
     return False
     
 def get_order():
@@ -95,7 +105,23 @@ def get_yn_input(prompt):
         input = raw_input('Please answer y or n: ')
     return input
 
+def debug_enable():
+    global DEBUG
+    DEBUG = False
+    
 def debug(msg, prefix = 'Server replies:\n'):
     if DEBUG == True:
         print prefix + msg
     else: print extract_body(msg)
+    
+def freeform_enable(s):
+    print ('\nRunning in freeform mode.')
+    while True:
+        data = raw_input('Enter input: ')
+        if data == 'quit':
+            close_sock(s, 'Connection closed. Program will exit.')
+        if not re.match('([a-zA-Z]*)\s(/pot-[0-9])(/\?([a-z-]+=[a-z0-9]+(&[a-z-]+=[a-z0-9]+)*)+)*\s(HTCPCP/1\.0)', data):
+            print 'Invalid HTCPCP request.'
+        else:
+            send_msg(s, data)
+            print recv_msg(s)

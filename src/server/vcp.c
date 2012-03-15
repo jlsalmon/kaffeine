@@ -26,12 +26,11 @@ int brew(pot_struct *pot, char* adds) {
 
     if (!validate_adds(adds)) {
         return E_INVALID_ADDS;
+    } else if (pot->states[pot->current_state][event].error) {
+        return pot->states[pot->current_state][event].error;
     }
 
     pot->states[pot->current_state][event].action(pot);
-    if (pot->states[pot->current_state][event].error) {
-        return pot->states[pot->current_state][event].error;
-    }
     pot->current_state = pot->states[pot->current_state]
             [event].next_state;
 
@@ -39,39 +38,33 @@ int brew(pot_struct *pot, char* adds) {
 }
 
 int get(pot_struct *pot, char* adds, char* response) {
-    int event = EVENT_COLLECT;
+    int event; // = EVENT_COLLECT;
 
     if (pot->current_state == STATE_OFF) {
         return E_OFF;
     }
 
-    /*
-        if (adds == NULL)
-            event = EVENT_READY;
-        else
-            event = EVENT_BREW;
-     */
+
+    if (adds == NULL)
+        event = EVENT_COLLECT;
+    else
+        event = EVENT_BREW;
+
 
     switch (event) {
         case EVENT_BREW:
-            pot->states[pot->current_state][event].action(pot->pot_id);
+            return brew(pot, adds);
+            break;
+        case EVENT_COLLECT:
             if (pot->states[pot->current_state][event].error) {
                 return pot->states[pot->current_state][event].error;
             }
-            pot->current_state = pot->states
-                    [pot->current_state][event].next_state;
-
-        case EVENT_COLLECT:
 
             if (difftime(time(NULL), pot->brew_end_time)
                     >= (BREWING_TIME + T_TO_COLD)) {
                 return E_CUP_COLD;
             } else {
-
                 pot->states[pot->current_state][event].action(pot);
-                if (pot->states[pot->current_state][event].error) {
-                    return pot->states[pot->current_state][event].error;
-                }
                 init_pot(pot, pot->pot_id);
                 strcat(response, BEVERAGE);
             }
@@ -91,23 +84,28 @@ void brewing_action(pot_struct *pot) {
     signal(SIGALRM, catch_alarm);
     alarm(BREWING_TIME);
     pot->brew_end_time = time(NULL) + BREWING_TIME;
-    printf("Brewing on Pot %d...\n", pot->pot_id);
+    sprintf(buf, "Brewing on Pot %d...", pot->pot_id);
+    log(buf);
 }
 
 void pouring_action(pot_struct *pot) {
-    printf("Pouring on Pot %d...\n", pot->pot_id);
+    sprintf(buf, "Pouring on Pot %d...", pot->pot_id);
+    log(buf);
 }
 
 void waiting_action(pot_struct *pot) {
-    printf("Coffee waiting for collection on pot %d\n", pot->pot_id);
+    sprintf(buf, "Coffee waiting for collection on pot %d", pot->pot_id);
+    log(buf);
 }
 
 void ready_action(pot_struct *pot) {
-    printf("Pot %d order complete.\n", pot->pot_id);
+    sprintf(buf, "Pot %d order complete.", pot->pot_id);
+    log(buf);
 }
 
 void off_action(pot_struct *pot) {
-    printf("Switching off\n");
+    sprintf(buf, "Switching off");
+    log(buf);
 }
 
 void null_action() {
@@ -115,7 +113,7 @@ void null_action() {
 }
 
 void catch_alarm(int sig) {
-    puts("signal caught");
+    log("signal caught");
     signal(sig, catch_alarm);
     int event = EVENT_STOP;
 
@@ -155,7 +153,7 @@ int validate_adds(char* adds) {
         adds_arr[i++] = add;
     }
 
-    for (int i = 0; i < MAX_ADDS; ++i) {
+    for (int i = 0; i < MAX_ADDS; i++) {
         if (adds_arr[i] == NULL) break;
         fprintf(stderr, "add: %s\n", adds_arr[i]);
         type = strtok(adds_arr[i], "=");
@@ -174,7 +172,7 @@ int validate_adds(char* adds) {
 
 int valid_add(char* add) {
     char* val_adds[] = VAL_ADDS_ARR;
-  
+
     for (int i = 0; i < VAL_ADDS_ARR_LEN; i++) {
         if (strcasecmp(add, val_adds[i]) == 0) {
             return TRUE;
@@ -221,5 +219,7 @@ void init_pot(pot_struct *pot, int id) {
     pot->states[STATE_POURING][EVENT_POUR].error = E_ALRDY_POURING;
     pot->states[STATE_POURING][EVENT_COLLECT].error = E_STILL_POURING;
 
-    fprintf(stderr, "Pot %d ready.\n", pot->pot_id);
+    char buf[20];
+    sprintf(buf, "Pot %d ready.", pot->pot_id);
+    log(buf);
 }

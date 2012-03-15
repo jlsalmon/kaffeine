@@ -39,7 +39,7 @@ OBJECTFILES= \
 
 
 # C Compiler Flags
-CFLAGS=-D_GNU_SOURCE -std=c99 -pthread -Wall
+CFLAGS=-D_GNU_SOURCE -std=c99 -pthread -Wall -fno-builtin-log
 
 # CC Compiler Flags
 CCFLAGS=

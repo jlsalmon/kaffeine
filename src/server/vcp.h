@@ -71,6 +71,7 @@ typedef struct {
 } pot_struct;
 
 pot_struct pots[NUM_POTS];
+char buf[1024];
 
 int propfind(pot_struct*, char*);
 int brew(pot_struct*, char*);

@@ -25,22 +25,23 @@ int main(void) {
     int sock, tmpsock, curr_thread;
     struct sockaddr_in client_addr;
     socklen_t sin_size;
-    char cli_addr[20], buf[MAX_DATA_SIZE];
+    char cli_addr[20];
 
     /* Create an endpoint to listen on */
     if ((sock = create_tcp_endpoint(USR_PORT)) < 0) {
-        fprintf(stderr, "Cannot create endpoint\n");
+        log("Cannot create endpoint");
         exit(1);
     } else {
-        fprintf(stderr, "TCP endpoint created.\n");
+        log("TCP endpoint created.");
     }
 
-    fprintf(stderr, "Initialising virtual coffee pots...\n");
+    log("Initialising virtual coffee pots...");
     for (int i = 0; i < NUM_POTS; ++i) {
         init_pot(&pots[i], i);
     }
-    fprintf(stderr, "Pots initialised.\n");
-    fprintf(stderr, "Accepting connections on port %d.\n", USR_PORT);
+    log("Pots initialised.");
+    sprintf(buf, "Accepting connections on port %d.", USR_PORT);
+    log(buf);
 
     /* main accept() loop */
     while (1) {
@@ -53,7 +54,7 @@ int main(void) {
         sin_size = sizeof (struct sockaddr_in);
 
         if (curr_thread == NUM_POTS) {
-            fprintf(stderr, "Connection limit reached\n");
+            log("Connection limit reached");
             tmpsock = accept(sock, (struct sockaddr *) &client_addr, &sin_size);
 
             strcpy(buf, HTCPCP_VERSION);
@@ -62,19 +63,20 @@ int main(void) {
             strcat(buf, M_503);
 
             if (send(tmpsock, buf, strlen((char*) buf), 0) <= 0) {
-                perror("send");
+                log(strerror(errno));
                 exit(-1);
             }
         } else {
 
             if ((threads[curr_thread].sock = accept(
                     sock, (struct sockaddr *) &client_addr, &sin_size)) < 0) {
-                perror("accept");
+                log(strerror(errno));
                 exit(-1);
             }
 
             strcpy(cli_addr, inet_ntoa(client_addr.sin_addr));
-            printf("\nConnection established with %s\n", cli_addr);
+            sprintf(buf, "Connection established with %s", cli_addr);
+            log(buf);
 
             threads[curr_thread].busy = TRUE;
             if (pthread_create(&threads[curr_thread].tid,
@@ -82,7 +84,7 @@ int main(void) {
                     &handle_request,
                     (void *) &threads[curr_thread])
                     != 0) {
-                perror("pthread_create");
+                log(strerror(errno));
                 exit(-2);
             }
         }
@@ -101,62 +103,77 @@ static void *handle_request(void *tptr) {
     char response[MAX_DATA_SIZE];
     int numbytes;
 
-    printf("Created thread %d\n", (int) thread->tid);
+    sprintf(buf, "Created thread %d", (int) thread->tid);
+    log(buf);
 
     memset(&request, 0, sizeof (request));
 
     /* receive initial message */
     if ((numbytes = recv(thread->sock, request, MAX_DATA_SIZE - 1, 0)) == -1) {
-        perror("recv");
+        log(strerror(errno));
         close_thread(thread);
     }
 
     while (strcmp(request, "quit") != 0) {
-
-        fprintf(stderr, "Message received: \n%s\n", request);
+        sprintf(buf, "Received: \n%s", request);
+        log(buf);
 
         if (strcmp(request, "\0") != 0) {
             parse_request(request, response);
         }
 
         if (send(thread->sock, response, strlen(response), MSG_NOSIGNAL) == -1) {
-            perror("send");
+            log(strerror(errno));
             close_thread(thread);
         }
+        sprintf(buf, "Sent: \n%s", response);
+        log(buf);
 
         memset(&request, 0, sizeof (request));
 
         if ((numbytes = recv(thread->sock, request, MAX_DATA_SIZE - 1, 0)) == -1) {
-            perror("recv");
+            log(strerror(errno));
             close_thread(thread);
         }
     }
 
     if (send(thread->sock, QUIT_MSG, strlen(QUIT_MSG), MSG_NOSIGNAL) == -1) {
-        perror("send");
+        log(strerror(errno));
         close_thread(thread);
     }
 
-    fprintf(stderr, "Thread %d exiting.\n", (int) pthread_self());
+    sprintf(buf, "Thread %d exiting.", (int) pthread_self());
+    log(buf);
     close_thread(thread);
     return 0;
 }
 
 void parse_request(char* request, char* response) {
     const char delimiters[] = " :/?";
-    char *method, *scheme, *host, *pot_no, *start_line, *header;
+    char *start_line, *header, *method, *pot_no, *adds = NULL, *protocol;
     char *rqcpy;
     int pot_id;
 
+    strcpy(response, HTCPCP_VERSION);
+
     rqcpy = strdup(request);
     method = strtok(rqcpy, delimiters);
-    scheme = strtok(NULL, delimiters);
-    host = strtok(NULL, delimiters);
+
+    if (!valid_method(method)) {
+        strcat(response, C_400);
+        strcat(response, CONTENT_TYPE);
+        strcat(response, M_400);
+        return;
+    }
 
     pot_no = strtok(NULL, delimiters);
-    pot_id = extract_pot_id(pot_no);
 
-    strcpy(response, HTCPCP_VERSION);
+    if (strstr(request, "?")) {
+        adds = strtok(NULL, delimiters);
+    }
+
+    protocol = strtok(NULL, delimiters);
+    pot_id = extract_pot_id(pot_no);
 
     if (pot_id > NUM_POTS || pot_id < 0) {
         strcat(response, C_404);
@@ -170,8 +187,8 @@ void parse_request(char* request, char* response) {
         return;
     }
 
-    fprintf(stderr, "Method: %s, Scheme: %s, Host: %s, Pot: %d\n"
-            , method, scheme, host, pot_id);
+    fprintf(stderr, "Method: %s, Pot: %d\n"
+            , method, pot_id);
 
     if (pots[pot_id].current_thread == 0) {
         pots[pot_id].current_thread = pthread_self();
@@ -191,7 +208,7 @@ void parse_request(char* request, char* response) {
         brew_request(&pots[pot_id], header, response);
 
     } else if (strcmp(method, METHOD_GET) == 0) {
-        get_request(&pots[pot_id], request, response);
+        get_request(&pots[pot_id], adds, response);
 
     } else if (strcmp(method, METHOD_WHEN) == 0) {
         when_request(&pots[pot_id], response);
@@ -220,12 +237,14 @@ void brew_request(pot_struct* pot, char* header, char* response) {
 
 void get_request(pot_struct* pot, char* adds, char* response) {
     int err;
-    
+
     strcat(response, C_200);
     strcat(response, CONTENT_TYPE);
 
     if ((err = get(pot, adds, response))) {
         build_err_response(response, err);
+    } else if (adds != NULL) {
+        strcat(response, M_200_START);
     }
 }
 
@@ -304,6 +323,18 @@ void build_err_response(char* response, int err) {
     }
 }
 
+int valid_method(char* method) {
+    if ((strcmp(method, METHOD_BREW) != 0)
+            && (strcmp(method, METHOD_POST) != 0)
+            && (strcmp(method, METHOD_GET) != 0)
+            && (strcmp(method, METHOD_WHEN) != 0)
+            && (strcmp(method, METHOD_PROPFIND) != 0)
+            ) {
+        return FALSE;
+    }
+    return TRUE;
+}
+
 int extract_pot_id(char* pot_no) {
     const char delimiters[] = "-";
     char *head, *s_id;
@@ -320,13 +351,13 @@ int create_tcp_endpoint(int port) {
 
     /* make socket with TCP streams. Kernel choose a suitable protocol */
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        perror("Server socket");
+        log(strerror(errno));
         return -1;
     }
 
     /* Set Unix socket level to allow address reuse */
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof (int)) == -1) {
-        perror("Server setsockopt");
+        log(strerror(errno));
         return -2;
     }
 
@@ -338,13 +369,13 @@ int create_tcp_endpoint(int port) {
     server.sin_port = htons(port);
 
     if (bind(sock, (struct sockaddr *) &server, sizeof (server)) < 0) {
-        perror("Server bind");
+        log(strerror(errno));
         return -3;
     }
 
     /* Listen for client connections */
     if (listen(sock, MAX_Q_SIZE) == -1) {
-        perror("Server listen");
+        log(strerror(errno));
         return -4;
     }
 
@@ -360,4 +391,13 @@ void close_thread(thread_struct* thread) {
     thread->busy = FALSE;
     close((int) thread->sock);
     pthread_exit((void *) 1);
+}
+
+void log(char* msg) {
+    time_t timer;
+    char buf[250];
+
+    timer = time(NULL);
+    strftime(buf, 250, "%Y:%m:%d %H:%M:%S", localtime(&timer));
+    fprintf(stderr, "%s\t%s\n", buf, msg);
 }
