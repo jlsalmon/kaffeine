@@ -227,7 +227,7 @@ void propfind_request(pot_struct * pot, char* response) {
 void brew_request(pot_struct* pot, char* header, char* response) {
     int err;
     if ((err = brew(pot, header))) {
-        build_err_response(response, err);
+        build_err_response(response, pot, err);
     } else {
         strcat(response, C_200);
         strcat(response, CONTENT_TYPE);
@@ -242,7 +242,7 @@ void get_request(pot_struct* pot, char* adds, char* response) {
     strcat(response, CONTENT_TYPE);
 
     if ((err = get(pot, adds, response))) {
-        build_err_response(response, err);
+        build_err_response(response, pot, err);
     } else if (adds != NULL) {
         strcat(response, M_200_START);
     }
@@ -254,7 +254,7 @@ void when_request(pot_struct* pot, char* response) {
     strcat(response, C_200);
 }
 
-void build_err_response(char* response, int err) {
+void build_err_response(char* response, pot_struct* pot, int err) {
     strcpy(response, HTCPCP_VERSION);
 
     switch (err) {
@@ -277,6 +277,7 @@ void build_err_response(char* response, int err) {
             strcat(response, C_421);
             strcat(response, CONTENT_TYPE);
             strcat(response, M_421);
+            calc_etc(response, pot);
             break;
         case E_STILL_POURING:
             strcat(response, C_422);

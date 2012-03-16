@@ -89,5 +89,6 @@ void catch_alarm(int);
 int validate_adds(char*);
 int valid_add(char*);
 void init_pot(pot_struct*, int);
+void calc_etc(char*, pot_struct*);
 
 #endif /* VCP_H_ */

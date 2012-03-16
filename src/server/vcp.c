@@ -44,12 +44,10 @@ int get(pot_struct *pot, char* adds, char* response) {
         return E_OFF;
     }
 
-
     if (adds == NULL)
         event = EVENT_COLLECT;
     else
         event = EVENT_BREW;
-
 
     switch (event) {
         case EVENT_BREW:
@@ -222,4 +220,11 @@ void init_pot(pot_struct *pot, int id) {
     char buf[20];
     sprintf(buf, "Pot %d ready.", pot->pot_id);
     log(buf);
+}
+
+void calc_etc(char* response, pot_struct* pot) {
+    time_t etc = pot->brew_end_time - time(NULL);
+    sprintf(buf, "ETC: %d\r\n", (int) etc);
+    //log(buf);
+    strcat(response, buf);
 }

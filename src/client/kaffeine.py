@@ -9,22 +9,10 @@ Main entry point for kaffeine client.
 import socket, sys, argparse
 from lib import *
 
-## Check args
-#if len(sys.argv) < 2 or len(sys.argv) > 4:
-#    sys.exit('usage: kaffeine.py request-uri [arguments]')
-#else:
-#    request = sys.argv[1]
-#if len(sys.argv) == 3:
-#    arg1 = sys.argv[2]
-#    if not valid_arg(arg1):
-#        sys.exit('error: unknown argument ' + arg1)
-#    elif arg1 == '-v':
-#        debug_enable()
-
-parser = argparse.ArgumentParser(description='Kaffeine, a HTCPCP-compliant coffee pot server')
+parser = argparse.ArgumentParser(description='kaffeine, a HTCPCP-compliant coffee pot server')
 parser.add_argument('request-uri', nargs=1, help='Coffee URI')
-parser.add_argument('-v', '--verbose', action='store_true', help='Print verbose messages', required=False)
-parser.add_argument('-f', '--freeform', action='store_true', help='Run in freeform mode', required=False)
+parser.add_argument('-v', '--verbose', action='store_true', help='print verbose messages', required=False)
+parser.add_argument('-f', '--freeform', action='store_true', help='run in freeform mode', required=False)
 args = vars(parser.parse_args())
     
 # Check request-uri is valid
@@ -54,6 +42,9 @@ except socket.error, e:
 
 print WELCOME_MSG
 
+if args['verbose']:
+	debug_enable()
+	print DEBUG
 if args['freeform']:
     freeform_enable(s)
 

@@ -107,7 +107,7 @@ def get_yn_input(prompt):
 
 def debug_enable():
     global DEBUG
-    DEBUG = False
+    DEBUG = True
     
 def debug(msg, prefix = 'Server replies:\n'):
     if DEBUG == True:
@@ -124,4 +124,4 @@ def freeform_enable(s):
             print 'Invalid HTCPCP request.'
         else:
             send_msg(s, data)
-            print recv_msg(s)
+            debug(recv_msg(s))

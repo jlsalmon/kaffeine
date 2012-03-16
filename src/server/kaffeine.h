@@ -46,8 +46,8 @@
 #define M_418           "The requested pot is not capable of brewing coffee. Please use a weaker protocol.\r\n"
 #define M_419           "The requested pot is not turned on.\r\n"
 #define M_420           "The requested pot is in use by another client.\r\n"
-#define M_421           "The requested pot is still brewing.\r\n"
-#define M_422           "The requested pot is still pouring.\r\n"
+#define M_421           "The requested pot is still brewing. "
+#define M_422           "The requested pot is still pouring. "
 #define M_423           "The requested pot is already brewing.\r\n"
 #define M_424           "The requested pot is already pouring.\r\n"
 #define M_425           "The requested pot is not pouring.\r\n"
@@ -80,7 +80,7 @@ void when_request(pot_struct*, char*);
 
 int valid_method(char*);
 int extract_pot_id(char*);
-void build_err_response(char*, int);
+void build_err_response(char*, pot_struct*, int);
 
 int create_tcp_endpoint();
 void close_thread(thread_struct*);
