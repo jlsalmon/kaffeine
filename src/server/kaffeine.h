@@ -38,7 +38,7 @@
 #define C_504           "504 Cup Overflow\r\n"
 #define C_505           "505 Cup Gone Cold\r\n"
 
-#define M_200_START     "Your coffee is brewing. ETC (Estimated Time to Caffeination) = 20s\r\n"
+#define M_200_START     "Your coffee is brewing. ETC (Estimated Time to Caffeination) = 20 seconds\r\n"
 #define M_200_END       "Your additions were added successfully.\r\n"
 #define M_400           "The request could not be understood by the server due to malformed syntax.\r\n"
 #define M_404           "The requested pot does not exist.\r\n"

@@ -30,6 +30,7 @@ int brew(pot_struct *pot, char* adds) {
         return pot->states[pot->current_state][event].error;
     }
 
+    pot->adds = adds;
     pot->states[pot->current_state][event].action(pot);
     pot->current_state = pot->states[pot->current_state]
             [event].next_state;
@@ -161,8 +162,7 @@ int validate_adds(char* adds) {
             return FALSE;
         }
 
-        fprintf(stderr, "type: %s\n", type);
-        fprintf(stderr, "quant: %s\n", quant);
+        fprintf(stderr, "type: %s, quant: %s\n", type, quant);
     }
 
     return TRUE;
@@ -224,7 +224,6 @@ void init_pot(pot_struct *pot, int id) {
 
 void calc_etc(char* response, pot_struct* pot) {
     time_t etc = pot->brew_end_time - time(NULL);
-    sprintf(buf, "ETC: %d\r\n", (int) etc);
-    //log(buf);
+    sprintf(buf, "ETC: %d seconds\r\n", (int) etc);
     strcat(response, buf);
 }

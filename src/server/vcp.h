@@ -39,9 +39,9 @@
 #define E_OVERFLOW      504
 #define E_CUP_COLD      505
 
-#define VAL_ADDS_STR    "Milk types:\tCream, Half-and-half, Whole-milk, Part-skim, Skim, Non-dairy\nSyrup types:\tVanilla, Almond, Raspberry\nSweeteners:\tWhite-sugar, Sweetener, Raw-cane, Honey\nSpice types:\tCinnamon, Cardamom\nAlcohol types:\tBrandy, Rum, Whiskey, Aquavit, Kahlua\nVolume units:\t[1-5], dash, splash, little, medium, lots\n"
-#define VAL_ADDS_ARR    {"Cream", "Half-and-half", "Whole-milk", "Part-skim", "Skim", "Non-dairy", "Vanilla", "Almond", "Raspberry", "White-sugar", "Sweetener", "Raw-cane", "Honey", "Cinnamon", "Cardamom", "Brandy", "Whiskey", "Rum", "Aquavit", "Kahlua" , "dash", "spalsh", "little", "medium", "lots", "1", "2", "3", "4", "5"}
-#define VAL_ADDS_ARR_LEN 30
+#define VAL_ADDS_STR    "Milk types:\tCream, Half-and-half, Whole-milk, Part-skim, Skim, Non-dairy\nSyrup types:\tVanilla, Almond, Raspberry\nSweeteners:\tWhite-sugar, Sweetener, Raw-cane, Honey\nSpice types:\tCinnamon, Cardamom\nAlcohol types:\tBrandy, Rum, Whiskey, Aquavit, Kahlua\nVolume units:\t[1-5], dash, splash, little, medium, lots\n\t\tOr specify no quantity to have the pot pour a custom amount.\n"
+#define VAL_ADDS_ARR    {"Cream", "Half-and-half", "Whole-milk", "Part-skim", "Skim", "Non-dairy", "Vanilla", "Almond", "Raspberry", "White-sugar", "Sweetener", "Raw-cane", "Honey", "Cinnamon", "Cardamom", "Brandy", "Whiskey", "Rum", "Aquavit", "Kahlua" , "dash", "spalsh", "little", "medium", "lots", "1", "2", "3", "4", "5", "unspecified"}
+#define VAL_ADDS_ARR_LEN 31
 #define BEVERAGE        "               ) (\n              (    )\n             ____(___ \n          _|`--------`| \n         (C|          |__ \n       /` `\\          /  `\\ \n       \\    `========`    / \n        `'--------------'`\n"
 
 #define BREWING_TIME    10
@@ -67,6 +67,7 @@ typedef struct {
     pthread_t current_thread;
     int current_state;
     time_t brew_end_time;
+    char* adds;
     pot_state_table states[NUM_STATES][NUM_EVENTS];
 } pot_struct;
 

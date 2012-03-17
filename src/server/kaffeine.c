@@ -205,6 +205,9 @@ void parse_request(char* request, char* response) {
     } else if (strcmp(method, METHOD_BREW) == 0) {
         start_line = strtok(request, "\r\n");
         header = strtok(NULL, "\r\n");
+        if (strstr(header, "Content-Type")) {
+            header = NULL;
+        }
         brew_request(&pots[pot_id], header, response);
 
     } else if (strcmp(method, METHOD_GET) == 0) {
