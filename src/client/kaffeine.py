@@ -67,10 +67,11 @@ def split_request(req):
     parts = req[0].partition('://')
     path = parts[2].split('/')
     host = path[0]
-    pot = path[1]
+    path = path[1].split('?')
+    pot = path[0]
     adds = False
-    if len(path) > 2:
-        adds = path[2]
+    if len(path) > 1:
+        adds = path[1]
     return host, pot, adds
     
 def propfind(sock, request):
@@ -93,7 +94,7 @@ def get(sock, pot, adds):
     if not adds:
         msg = METHOD_GET + '/' + pot + HTCPCP_VERSION
     else:
-        msg = METHOD_GET + '/' + pot + '/' + adds + HTCPCP_VERSION
+        msg = METHOD_GET + '/' + pot + '?' + adds + HTCPCP_VERSION
     send_msg(sock, msg)
     return recv_msg(sock)
   
@@ -139,9 +140,9 @@ def close_sock(s, msg):
     sys.exit(msg)
     
 def extract_body(msg):
-    parts = msg.split('\r\n')
-    if len(parts) >= 3:
-        return parts[3]
+    parts = msg.split('\r\n\r\n')
+    if len(parts) >= 2:
+        return parts[1]
     else: return ""
     
 def status_code(msg):
@@ -251,7 +252,8 @@ def debug_enable():
 def debug(msg, prefix='Server replies:\n'):
     if DEBUG == True:
         print prefix + msg
-    else: print extract_body(msg)
+    elif not re.match('Sent', prefix): 
+        print extract_body(msg)
     
 def freeform_enable(s):
     print ('\nRunning in freeform mode.')
@@ -259,7 +261,7 @@ def freeform_enable(s):
         data = raw_input('Enter input: ')
         if data == 'quit':
             close_sock(s, 'Connection closed. Program will exit.')
-        if not re.match('([a-zA-Z]*)\s(/pot-[0-9])(/\?([a-z-]+=[a-z0-9]+(&[a-z-]+=[a-z0-9]+)*)+)*\s(HTCPCP/1\.0)', data):
+        if not re.match('([a-zA-Z]*)\s(/pot-[0-9])(\?([a-z-]+=[a-z0-9]+(&[a-z-]+=[a-z0-9]+)*)+)*\s(HTCPCP/1\.0)', data):
             print 'Invalid HTCPCP request.'
         else:
             send_msg(s, data)

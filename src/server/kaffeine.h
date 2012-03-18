@@ -61,7 +61,6 @@
 #define M_504           "Out of time: your cup has overflowed.\r\n"
 #define M_505           "Out of time: your coffee has gone cold.\r\n"
 
-#define QUIT_MSG	"Connection closed."
 #define TRUE 		1
 #define FALSE		0
 

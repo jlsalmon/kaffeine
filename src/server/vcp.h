@@ -67,7 +67,7 @@ Volume units:\t[1-5], dash, splash, little, medium, lots\n\
          \\    `========`    / \n\
           `'--------------'`\n"
 
-#define BREWING_TIME    10
+#define BREWING_TIME    5
 #define POURING_TIME    10
 #define T_TO_COLD       60
 #define MAX_ADDS        5
@@ -88,6 +88,7 @@ typedef struct {
 typedef struct {
     int pot_id;
     int current_state;
+    int waiting_adds;
     pthread_t current_thread;
     time_t brew_end_time;
     time_t pour_end_time;
@@ -116,6 +117,9 @@ void pour_alarm(int);
 
 int validate_adds(char*);
 int valid_add(char*);
+void format_adds(char*);
+char *replace(char*, char*, char*);
+char *get_state_str(int);
 void init_pot(pot_struct*, int);
 void calc_etc(char*, pot_struct*);
 

@@ -15,7 +15,11 @@
 
 int propfind(pot_struct *pot, char* response) {
     char val_adds[30];
+    char state[30];
+    char *state_str = get_state_str(pot->current_state);
+    sprintf(state, "Pot %d state: \t%s\n", pot->pot_id, state_str);
     sprintf(val_adds, "Valid additions for Pot %d: \n\n", pot->pot_id);
+    strcat(response, state);
     strcat(response, val_adds);
     strcat(response, VAL_ADDS_STR);
     return TRUE;
@@ -31,6 +35,11 @@ int brew(pot_struct *pot, char* adds) {
     }
 
     pot->adds = adds;
+    if (pot->adds != NULL
+            && strstr(pot->adds, "unspecified") != NULL) {
+        pot->waiting_adds = TRUE;
+    }
+
     pot->states[pot->current_state][event].action(pot);
     pot->current_state = pot->states[pot->current_state]
             [event].next_state;
@@ -54,19 +63,26 @@ int get(pot_struct *pot, char* adds, char* response) {
         case EVENT_BREW:
             return brew(pot, adds);
             break;
+            
         case EVENT_COLLECT:
             if (pot->states[pot->current_state][event].error) {
                 return pot->states[pot->current_state][event].error;
             } else if (difftime(time(NULL), pot->brew_end_time)
                     >= (BREWING_TIME + T_TO_COLD)) {
                 return E_CUP_COLD;
-            } else if (pot->adds != NULL 
-                    && strstr(pot->adds, "unspecified") != NULL) {
+            } else if (pot->waiting_adds) {
                 return E_WAITING_ADDS;
             } else {
                 pot->states[pot->current_state][event].action(pot);
-                init_pot(pot, pot->pot_id);
                 strcat(response, BEVERAGE);
+                
+                if (pot->adds != NULL) {
+                    format_adds(pot->adds);
+                    strcat(response, pot->adds);
+                } else {
+                    strcat(response, "Your order: no additions");
+                }
+                init_pot(pot, pot->pot_id);
             }
             break;
         default:
@@ -110,22 +126,26 @@ void brewing_action(pot_struct *pot) {
     pot->brew_end_time = time(NULL) + BREWING_TIME;
     sprintf(buf, "Brewing on Pot %d...", pot->pot_id);
     log(buf);
+
+    sprintf(buf, "adds: %s", pot->adds);
+    log(buf);
 }
 
 void pouring_action(pot_struct *pot) {
     signal(SIGALRM, pour_alarm);
     alarm(POURING_TIME);
     pot->pour_end_time = time(NULL) + POURING_TIME;
-    sprintf(buf, "Pouring on Pot %d...", pot->pot_id);
+    pot->waiting_adds = FALSE;
+    sprintf(buf, "Pouring %s on Pot %d...", pot->adds, pot->pot_id);
     log(buf);
 }
 
 void waiting_action(pot_struct *pot) {
-    if (pot->adds == NULL) {
+    if (pot->waiting_adds) {
+        sprintf(buf, "Cup waiting to pour on pot %d", pot->pot_id);
+    } else {
         sprintf(buf, "Coffee waiting for collection on pot %d"
                 , pot->pot_id);
-    } else if (strstr(pot->adds, "unspecified") != NULL) {
-        sprintf(buf, "Cup waiting to pour on pot %d", pot->pot_id);
     }
     log(buf);
 }
@@ -153,8 +173,6 @@ void brew_alarm(int sig) {
         if (difftime(time(NULL), pots[i].brew_end_time)
                 <= BREWING_TIME) {
             if (pots[i].current_state == STATE_BREWING) {
-                sprintf(buf, "adds: %s", pots[i].adds);
-                log(buf);
                 pots[i].states[pots[i].current_state][event].action(&pots[i]);
                 pots[i].current_state = pots[i].states[pots[i].current_state]
                         [event].next_state;
@@ -171,7 +189,6 @@ int validate_adds(char* adds) {
     if (adds == NULL) {
         return TRUE;
     }
-    fprintf(stderr, "%s\n", adds);
 
     const char delimiters[] = " &";
     char *header, *add = NULL, *type = NULL, *quant = NULL;
@@ -184,7 +201,6 @@ int validate_adds(char* adds) {
     adds_arr[i++] = add;
 
     while (add != NULL) {
-        printf("add = \"%s\"\n", add);
         add = strtok(NULL, delimiters);
 
         if (i == MAX_ADDS - 1) {
@@ -195,15 +211,12 @@ int validate_adds(char* adds) {
 
     for (int i = 0; i < MAX_ADDS; i++) {
         if (adds_arr[i] == NULL) break;
-        fprintf(stderr, "add: %s\n", adds_arr[i]);
         type = strtok(adds_arr[i], "=");
         quant = strtok(NULL, "=");
 
         if (!valid_add(type) || !valid_add(quant)) {
             return FALSE;
         }
-
-        fprintf(stderr, "type: %s, quant: %s\n", type, quant);
     }
 
     return TRUE;
@@ -220,12 +233,71 @@ int valid_add(char* add) {
     return FALSE;
 }
 
+void format_adds(char* adds) {
+    char *newstr = malloc(128);
+    newstr = replace(adds, "=", ": ");
+    newstr = replace(newstr, "&", ", ");
+    newstr = replace(newstr, "unspecified", "custom amount");
+    newstr = replace(newstr, "Accept-Additions: ", "");
+    strcpy(adds, "Your order: ");
+    strcat(adds, newstr);
+}
+
+char *replace(char *s, char *old, char *new) {
+    char *ret;
+    int i, count = 0;
+    size_t newlen = strlen(new);
+    size_t oldlen = strlen(old);
+
+    for (i = 0; s[i] != '\0'; i++) {
+        if (strstr(&s[i], old) == &s[i]) {
+            count++;
+            i += oldlen - 1;
+        }
+    }
+
+    ret = malloc(i + count * (newlen - oldlen));
+    if (ret == NULL)
+        exit(EXIT_FAILURE);
+
+    i = 0;
+    while (*s) {
+        if (strstr(s, old) == s) {
+            strcpy(&ret[i], new);
+            i += newlen;
+            s += oldlen;
+        } else
+            ret[i++] = *s++;
+    }
+    ret[i] = '\0';
+
+    return ret;
+}
+
+char *get_state_str(int state) {
+    switch (state) {
+        case STATE_OFF:
+            return "Off";
+        case STATE_READY:
+            return "Ready";
+        case STATE_WAITING:
+            return "Waiting";
+        case STATE_BREWING:
+            return "Brewing";
+        case STATE_POURING:
+            return "Pouring";
+        default:
+            return "";
+    }
+}
+
 void init_pot(pot_struct *pot, int id) {
 
     pot->pot_id = id;
     pot->current_thread = 0;
     pot->current_state = STATE_READY;
-    pot->adds = NULL;
+    pot->adds = malloc(1024);
+    pot->waiting_adds = FALSE;
 
     for (int j = 0; j < NUM_STATES; ++j) {
         for (int k = 0; k < NUM_EVENTS; ++k) {

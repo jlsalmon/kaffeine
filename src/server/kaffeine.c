@@ -99,20 +99,23 @@ int main(void) {
 static void *handle_request(void *tptr) {
     thread_struct *thread;
     thread = (thread_struct *) tptr;
-    char request[MAX_DATA_SIZE];
-    char response[MAX_DATA_SIZE];
+    char *request = malloc(MAX_DATA_SIZE + 1);
+    char *response = malloc(MAX_DATA_SIZE + 1);
     int numbytes;
 
     sprintf(buf, "Created thread %d", (int) thread->tid);
     log(buf);
 
-    memset(&request, 0, sizeof (request));
+    memset(request, 0, sizeof (request));
+    request[0] = '\0';
+
 
     /* receive initial message */
     if ((numbytes = recv(thread->sock, request, MAX_DATA_SIZE - 1, 0)) == -1) {
         log(strerror(errno));
         close_thread(thread);
     }
+    request[numbytes] = '\0';
 
     while (strcmp(request, "quit") != 0) {
         sprintf(buf, "Received: \n%s", request);
@@ -129,17 +132,13 @@ static void *handle_request(void *tptr) {
         sprintf(buf, "Sent: \n%s", response);
         log(buf);
 
-        memset(&request, 0, sizeof (request));
+        //memset(&request, 0, sizeof (request));
 
         if ((numbytes = recv(thread->sock, request, MAX_DATA_SIZE - 1, 0)) == -1) {
             log(strerror(errno));
             close_thread(thread);
         }
-    }
-
-    if (send(thread->sock, QUIT_MSG, strlen(QUIT_MSG), MSG_NOSIGNAL) == -1) {
-        log(strerror(errno));
-        close_thread(thread);
+        request[numbytes] = '\0';
     }
 
     sprintf(buf, "Thread %d exiting.", (int) pthread_self());
@@ -170,6 +169,7 @@ void parse_request(char* request, char* response) {
 
     if (strstr(request, "?")) {
         adds = strtok(NULL, delimiters);
+        strcat(adds, "\0");
     }
 
     protocol = strtok(NULL, delimiters);
@@ -284,6 +284,7 @@ void build_err_response(char* response, pot_struct* pot, int err) {
             strcat(response, C_406);
             strcat(response, CONTENT_TYPE);
             strcat(response, M_406);
+            propfind(pot, response);
             break;
         case E_OFF:
             strcat(response, C_419);
