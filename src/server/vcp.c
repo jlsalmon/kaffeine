@@ -39,7 +39,7 @@ int brew(pot_struct *pot, char* adds) {
 }
 
 int get(pot_struct *pot, char* adds, char* response) {
-    int event; // = EVENT_COLLECT;
+    int event;
 
     if (pot->current_state == STATE_OFF) {
         return E_OFF;
@@ -57,11 +57,11 @@ int get(pot_struct *pot, char* adds, char* response) {
         case EVENT_COLLECT:
             if (pot->states[pot->current_state][event].error) {
                 return pot->states[pot->current_state][event].error;
-            }
-
-            if (difftime(time(NULL), pot->brew_end_time)
+            } else if (difftime(time(NULL), pot->brew_end_time)
                     >= (BREWING_TIME + T_TO_COLD)) {
                 return E_CUP_COLD;
+            } else if (pot->adds != NULL) {
+                return E_WAITING_ADDS;
             } else {
                 pot->states[pot->current_state][event].action(pot);
                 init_pot(pot, pot->pot_id);
@@ -74,13 +74,37 @@ int get(pot_struct *pot, char* adds, char* response) {
     return SUCCESS;
 }
 
-int when(pot_struct *pot) {
+int pour(pot_struct *pot) {
+    int event = EVENT_POUR;
 
-    return TRUE;
+    if (pot->states[pot->current_state][event].error) {
+        return pot->states[pot->current_state][event].error;
+    }
+
+    pot->states[pot->current_state][event].action(pot);
+    pot->current_state = pot->states[pot->current_state]
+            [event].next_state;
+    pot->adds = NULL;
+
+    return SUCCESS;
+}
+
+int when(pot_struct *pot) {
+    int event = EVENT_STOP;
+
+    if (pot->states[pot->current_state][event].error) {
+        return pot->states[pot->current_state][event].error;
+    }
+
+    pot->states[pot->current_state][event].action(pot);
+    pot->current_state = pot->states[pot->current_state]
+            [event].next_state;
+
+    return SUCCESS;
 }
 
 void brewing_action(pot_struct *pot) {
-    signal(SIGALRM, catch_alarm);
+    signal(SIGALRM, brew_alarm);
     alarm(BREWING_TIME);
     pot->brew_end_time = time(NULL) + BREWING_TIME;
     sprintf(buf, "Brewing on Pot %d...", pot->pot_id);
@@ -88,12 +112,19 @@ void brewing_action(pot_struct *pot) {
 }
 
 void pouring_action(pot_struct *pot) {
+    signal(SIGALRM, pour_alarm);
+    alarm(POURING_TIME);
+    pot->pour_end_time = time(NULL) + POURING_TIME;
     sprintf(buf, "Pouring on Pot %d...", pot->pot_id);
     log(buf);
 }
 
 void waiting_action(pot_struct *pot) {
-    sprintf(buf, "Coffee waiting for collection on pot %d", pot->pot_id);
+    if (pot->adds == NULL) {
+        sprintf(buf, "Coffee waiting for collection on pot %d", pot->pot_id);
+    } else {
+        sprintf(buf, "Cup waiting to pour on pot %d", pot->pot_id);
+    }
     log(buf);
 }
 
@@ -111,9 +142,8 @@ void null_action() {
     //do nothing
 }
 
-void catch_alarm(int sig) {
-    log("signal caught");
-    signal(sig, catch_alarm);
+void brew_alarm(int sig) {
+    log("Brewing finished");
     int event = EVENT_STOP;
 
     for (int i = 0; i < NUM_POTS; ++i) {
@@ -128,6 +158,11 @@ void catch_alarm(int sig) {
             }
         }
     }
+}
+
+void pour_alarm(int sig) {
+    log("Cup overflowed");
+    int event = EVENT_STOP;
 }
 
 int validate_adds(char* adds) {
@@ -184,6 +219,7 @@ void init_pot(pot_struct *pot, int id) {
     pot->pot_id = id;
     pot->current_thread = 0;
     pot->current_state = STATE_READY;
+    pot->adds = NULL;
 
     for (int j = 0; j < NUM_STATES; ++j) {
         for (int k = 0; k < NUM_EVENTS; ++k) {

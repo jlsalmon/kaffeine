@@ -16,6 +16,7 @@
 #define METHOD_BREW     "BREW"
 #define METHOD_POST     "POST"
 #define METHOD_GET      "GET"
+#define METHOD_POUR     "POUR"
 #define METHOD_WHEN     "WHEN"
 #define METHOD_PROPFIND "PROPFIND"
 #define CONTENT_TYPE    "Content-Type: message/coffeepot\r\n\r\n"
@@ -34,12 +35,14 @@
 #define C_425           "425 Not Pouring\r\n"
 #define C_426           "426 Cup Waiting\r\n"
 #define C_427           "427 No Cup\r\n"
+#define C_428           "428 Waiting For Additions\r\n"
 #define C_503           "503 Service Unavailable\r\n"
 #define C_504           "504 Cup Overflow\r\n"
 #define C_505           "505 Cup Gone Cold\r\n"
 
-#define M_200_START     "Your coffee is brewing. ETC (Estimated Time to Caffeination) = 20 seconds\r\n"
-#define M_200_END       "Your additions were added successfully.\r\n"
+#define M_200_BREW      "Your coffee is brewing. ETC (Estimated Time to Caffeination) = 20 seconds\r\n"
+#define M_200_POUR      "Your additions are being poured. Say WHEN.\r\n"
+#define M_200_WHEN      "Your additions were added successfully.\r\n"
 #define M_400           "The request could not be understood by the server due to malformed syntax.\r\n"
 #define M_404           "The requested pot does not exist.\r\n"
 #define M_406           "The requested pot cannot serve the requested additions.\r\n"
@@ -52,7 +55,8 @@
 #define M_424           "The requested pot is already pouring.\r\n"
 #define M_425           "The requested pot is not pouring.\r\n"
 #define M_426           "The requested pot still has a cup waiting to be collected.\r\n"
-#define M_427           "The requested pot has no cup to be collected.\r\n"
+#define M_427           "The requested pot has no cup waiting.\r\n"
+#define M_428           "The requested pot is waiting for additions to be poured.\r\n"
 #define M_503           "There are no pots available to serve your request. Please try again later.\r\n"
 #define M_504           "Out of time: your cup has overflowed.\r\n"
 #define M_505           "Out of time: your coffee has gone cold.\r\n"
@@ -76,6 +80,7 @@ void parse_request(char*, char*);
 void propfind_request(pot_struct*, char*);
 void brew_request(pot_struct*, char*, char*);
 void get_request(pot_struct*, char*, char*);
+void pour_request(pot_struct*, char*);
 void when_request(pot_struct*, char*);
 
 int valid_method(char*);

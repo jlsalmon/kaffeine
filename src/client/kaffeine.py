@@ -20,7 +20,7 @@ def main():
     
     # Open socket, connect
     s = open_sock(host)
-    print WELCOME_MSG
+    print MSG_WELCOME
     
     if args['verbose']:
     	debug_enable()
@@ -35,11 +35,10 @@ def main():
         debug(response)
         c = status_code(response)
         if c['error']:
-            close_sock(s, 'The server could not complete '
-                     + 'the request. Program will exit.')
+            close_sock(s, MSG_ERROR)
     
-        order = get_order()
-        response = brew(s, pot, order)
+        adds = get_order()
+        response = brew(s, pot, adds)
         
     else:
         response = get(s, pot, adds)
@@ -47,31 +46,18 @@ def main():
     debug(response)
     c = status_code(response)
     if c['error']:
-            close_sock(s, 'The server could not complete '
-                     + 'the request. Program will exit.')
+            close_sock(s, MSG_ERROR)
     
-    data = raw_input('Type "get" to collect your coffee: ')
-     
-    while not data == 'get':
-        if data == 'quit':
-            close_sock(s, 'Connection closed. Program will exit.')
-        data = raw_input('Type "get" to collect your coffee: ')  
+    if not adds:
+        prompt_get(s, pot)
     
-    while True:
-        response = get(s, pot, None)   
-        debug(response)
-        c = status_code(response)
-        
-        if c['code'] == '200':
-            close_sock(s, 'Thank you for using kaffeine. We look forward'
-                     + ' to quenching your digital thirst again.')
-        if not c['code'] == '421':
-            close_sock(s, 'The server could not complete '
-                     + 'the request. Program will exit.')
-        data = raw_input('Type "get" to collect your coffee: ')  
+    else:
+        prompt_pour(s, pot)
+        prompt_when(s, pot)
+        prompt_get(s, pot)
     
 def setup_args():
-    parser = argparse.ArgumentParser(description='kaffeine, a HTCPCP-compliant coffee pot server')
+    parser = argparse.ArgumentParser(description='kaffeine, a HTCPCP-compliant coffee pot client')
     parser.add_argument('request-uri', nargs=1, help='Coffee URI')
     parser.add_argument('-v', '--verbose', action='store_true', help='print verbose messages', required=False)
     parser.add_argument('-f', '--freeform', action='store_true', help='run in freeform mode', required=False)
@@ -101,17 +87,23 @@ def brew(sock, pot, order):
             + CONTENT_TYPE + MSG_BODY
     send_msg(sock, msg) 
     return recv_msg(sock)
-    
+
 def get(sock, pot, adds):
+    
     if not adds:
         msg = METHOD_GET + '/' + pot + HTCPCP_VERSION
     else:
         msg = METHOD_GET + '/' + pot + '/' + adds + HTCPCP_VERSION
     send_msg(sock, msg)
     return recv_msg(sock)
-    
-def when():
-    print 'Not yet implemented'
+  
+def pour(sock, pot):
+    send_msg(sock, METHOD_POUR + '/' + pot + HTCPCP_VERSION)
+    return recv_msg(sock)
+      
+def when(sock, pot):
+    send_msg(sock, METHOD_WHEN + '/' + pot + HTCPCP_VERSION)
+    return recv_msg(sock)
     
 def send_msg(s, msg):
     try:
@@ -148,7 +140,7 @@ def close_sock(s, msg):
     
 def extract_body(msg):
     parts = msg.split('\r\n')
-    if len(parts) >=3:
+    if len(parts) >= 3:
         return parts[3]
     else: return ""
     
@@ -178,6 +170,48 @@ def verify_url(url):
             return False
     return True
     
+def prompt_get(s, pot):
+    get_input(PROMPT_GET, 'get', s)
+    
+    while True:
+        response = get(s, pot, None)   
+        debug(response)
+        c = status_code(response)
+        
+        if c['code'] == '200':
+            close_sock(s, MSG_COMPLETE)
+        if not c['code'] in ['421', '428']:
+            close_sock(s, MSG_ERROR)
+        get_input(PROMPT_GET, 'get', s)
+            
+def prompt_pour(s, pot):
+    get_input(PROMPT_POUR, 'pour', s)
+     
+    while True:
+        response = pour(s, pot)   
+        debug(response)
+        c = status_code(response)
+        
+        if c['code'] == '200':
+            return
+        if not c['code'] in ['421', '428']:
+            close_sock(s, MSG_ERROR)
+        get_input(PROMPT_POUR, 'pour', s)
+        
+def prompt_when(s, pot):
+    get_input(PROMPT_WHEN, 'when', s)
+        
+    while True:
+        response = when(s, pot)   
+        debug(response)
+        c = status_code(response)
+        
+        if c['code'] == '200':
+            return
+        if not c['code'] in ['421', '428']:
+            close_sock(s, MSG_ERROR)
+        get_input(PROMPT_WHEN, 'when', s)
+        
 def get_order():
     if re.match(get_yn_input("Would you like any additions?"), 'y'):
         finished = False
@@ -196,6 +230,13 @@ def get_order():
     else: 
         return ''
 
+def get_input(prompt, target, sock):
+    data = raw_input(prompt)
+    while not data == target:
+        if data == 'quit':
+            close_sock(s, MSG_QUIT)
+        data = raw_input(prompt)
+    
 def get_yn_input(prompt):
     input = raw_input(prompt + " (y/n) ")
     while not re.match("[yn]", input):
@@ -206,7 +247,7 @@ def debug_enable():
     global DEBUG
     DEBUG = True
     
-def debug(msg, prefix = 'Server replies:\n'):
+def debug(msg, prefix='Server replies:\n'):
     if DEBUG == True:
         print prefix + msg
     else: print extract_body(msg)

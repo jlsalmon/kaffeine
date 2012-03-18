@@ -205,13 +205,16 @@ void parse_request(char* request, char* response) {
     } else if (strcmp(method, METHOD_BREW) == 0) {
         start_line = strtok(request, "\r\n");
         header = strtok(NULL, "\r\n");
-        if (strstr(header, "Content-Type")) {
+        if (header != NULL && strstr(header, "Content-Type")) {
             header = NULL;
         }
         brew_request(&pots[pot_id], header, response);
 
     } else if (strcmp(method, METHOD_GET) == 0) {
         get_request(&pots[pot_id], adds, response);
+
+    } else if (strcmp(method, METHOD_POUR) == 0) {
+        pour_request(&pots[pot_id], response);
 
     } else if (strcmp(method, METHOD_WHEN) == 0) {
         when_request(&pots[pot_id], response);
@@ -234,7 +237,7 @@ void brew_request(pot_struct* pot, char* header, char* response) {
     } else {
         strcat(response, C_200);
         strcat(response, CONTENT_TYPE);
-        strcat(response, M_200_START);
+        strcat(response, M_200_BREW);
     }
 }
 
@@ -247,14 +250,30 @@ void get_request(pot_struct* pot, char* adds, char* response) {
     if ((err = get(pot, adds, response))) {
         build_err_response(response, pot, err);
     } else if (adds != NULL) {
-        strcat(response, M_200_START);
+        strcat(response, M_200_BREW);
+    }
+}
+
+void pour_request(pot_struct* pot, char* response) {
+    int err;
+    if ((err = pour(pot))) {
+        build_err_response(response, pot, err);
+    } else {
+        strcat(response, C_200);
+        strcat(response, CONTENT_TYPE);
+        strcat(response, M_200_POUR);
     }
 }
 
 void when_request(pot_struct* pot, char* response) {
-
-    strcpy(response, HTCPCP_VERSION);
-    strcat(response, C_200);
+    int err;
+    if ((err = when(pot))) {
+        build_err_response(response, pot, err);
+    } else {
+        strcat(response, C_200);
+        strcat(response, CONTENT_TYPE);
+        strcat(response, M_200_WHEN);
+    }
 }
 
 void build_err_response(char* response, pot_struct* pot, int err) {
@@ -312,6 +331,11 @@ void build_err_response(char* response, pot_struct* pot, int err) {
             strcat(response, CONTENT_TYPE);
             strcat(response, M_427);
             break;
+        case E_WAITING_ADDS:
+            strcat(response, C_428);
+            strcat(response, CONTENT_TYPE);
+            strcat(response, M_428);
+            break;
         case E_OVERFLOW:
             strcat(response, C_504);
             strcat(response, CONTENT_TYPE);
@@ -331,6 +355,7 @@ int valid_method(char* method) {
     if ((strcmp(method, METHOD_BREW) != 0)
             && (strcmp(method, METHOD_POST) != 0)
             && (strcmp(method, METHOD_GET) != 0)
+            && (strcmp(method, METHOD_POUR) != 0)
             && (strcmp(method, METHOD_WHEN) != 0)
             && (strcmp(method, METHOD_PROPFIND) != 0)
             ) {

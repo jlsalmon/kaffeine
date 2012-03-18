@@ -36,6 +36,7 @@
 #define E_NOT_POURING   425
 #define E_CUP_WAITING   426
 #define E_NO_CUP        427
+#define E_WAITING_ADDS  428
 #define E_OVERFLOW      504
 #define E_CUP_COLD      505
 
@@ -45,8 +46,8 @@
 #define BEVERAGE        "               ) (\n              (    )\n             ____(___ \n          _|`--------`| \n         (C|          |__ \n       /` `\\          /  `\\ \n       \\    `========`    / \n        `'--------------'`\n"
 
 #define BREWING_TIME    10
+#define POURING_TIME    10
 #define T_TO_COLD       60
-#define T_TO_OVERFLOW   10
 #define MAX_ADDS        5
 
 #define TRUE            1
@@ -64,9 +65,10 @@ typedef struct {
 
 typedef struct {
     int pot_id;
-    pthread_t current_thread;
     int current_state;
+    pthread_t current_thread;
     time_t brew_end_time;
+    time_t pour_end_time;
     char* adds;
     pot_state_table states[NUM_STATES][NUM_EVENTS];
 } pot_struct;
@@ -77,6 +79,7 @@ char buf[1024];
 int propfind(pot_struct*, char*);
 int brew(pot_struct*, char*);
 int get(pot_struct*, char*, char*);
+int pour(pot_struct*);
 int when(pot_struct*);
 
 void brewing_action(pot_struct*);
@@ -85,7 +88,9 @@ void waiting_action(pot_struct*);
 void ready_action(pot_struct*);
 void off_action(pot_struct*);
 void null_action();
-void catch_alarm(int);
+
+void brew_alarm(int);
+void pour_alarm(int);
 
 int validate_adds(char*);
 int valid_add(char*);
