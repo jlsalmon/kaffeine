@@ -45,7 +45,7 @@
 #define M_200_WHEN      "Your additions were added successfully.\r\n"
 #define M_400           "The request could not be understood by the server due to malformed syntax.\r\n"
 #define M_404           "The requested pot does not exist.\r\n"
-#define M_406           "The requested pot cannot serve the requested additions.\r\n"
+#define M_406           "The supplied additions were invalid.\r\n"
 #define M_418           "The requested pot is not capable of brewing coffee. Please use a weaker protocol.\r\n"
 #define M_419           "The requested pot is not turned on.\r\n"
 #define M_420           "The requested pot is in use by another client.\r\n"
@@ -61,7 +61,7 @@
 #define M_504           "Out of time: your cup has overflowed.\r\n"
 #define M_505           "Out of time: your coffee has gone cold.\r\n"
 
-#define QUIT_MSG	"Connection closed by server."
+#define QUIT_MSG	"Connection closed."
 #define TRUE 		1
 #define FALSE		0
 

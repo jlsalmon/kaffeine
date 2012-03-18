@@ -46,9 +46,9 @@ def main():
     debug(response)
     c = status_code(response)
     if c['error']:
-            close_sock(s, MSG_ERROR)
+        close_sock(s, MSG_ERROR)
     
-    if not adds:
+    if not adds or not re.match(".*unspecified.*", adds):
         prompt_get(s, pot)
     
     else:
@@ -160,13 +160,14 @@ def verify_url(url):
     path = parts[2].split('/')
     if len(path) < 2:
         return False
-    if not re.match('[a-zA-Z0-9.]', path[0]):
+    if not re.match('[a-zA-Z0-9\.]+', path[0]):
         return False
     if not re.match('pot-[0-9]', path[1]):
         return False
-    if len(path) > 2:
+    if re.match('\?.*', path[1]):
+        path = path[1].split('?')
         if not re.match('\?([a-z-]+=[a-z0-9]+(&[a-z-]+=[a-z0-9]+)*)+',
-                         path[2]):
+                         path[1]):
             return False
     return True
     
@@ -230,7 +231,7 @@ def get_order():
     else: 
         return ''
 
-def get_input(prompt, target, sock):
+def get_input(prompt, target, s):
     data = raw_input(prompt)
     while not data == target:
         if data == 'quit':
