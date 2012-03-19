@@ -79,12 +79,15 @@ def split_request(req):
     return host, pot, adds
     
 def save_request(request):
-    with open("orders.coffee", "w") as f:
+    with open("orders.coffee", "wb") as f:
         pickle.dump(request, f)
     
 def load_request():
-    with open("orders.coffee", "r") as f:
-        return pickle.load(f)
+    with open("orders.coffee", "rb") as f:
+        request = pickle.load(f)
+        print ('Repeating your previous order of ' + request['adds']
+			+ ' at ' + request['host'] + ' on ' + request['pot'])
+        return request['host'], request['pot'], request['adds']
     
 def propfind(sock, request):
     msg = METHOD_PROPFIND + '/' + request + HTCPCP_VERSION

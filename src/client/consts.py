@@ -36,8 +36,7 @@ MSG_QUIT        = 'Connection closed. Program will exit.'
 MSG_COMPLETE    = 'Thank you for using kaffeine. We look forward'\
                      + ' to quenching your digital thirst again.'
 MSG_WELCOME     = '''
-******************************************************************
-* Welcome to kaffeine, the virtual coffee shop of the future!    *
-* Kaffeine uses the HTCPCP protocol to control an array of       *
-* virtual coffee pots for your enjoyment.                        *
-******************************************************************'''                     
+*	Welcome to kaffeine, the virtual coffee shop of the future!
+*	Kaffeine uses the HTCPCP protocol to control an array of
+*	virtual coffee pots for your enjoyment.
+'''                     

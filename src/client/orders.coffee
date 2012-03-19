@@ -5,7 +5,7 @@ S'localhost'
 p2
 sS'adds'
 p3
-S'cream=unspecified\r\n'
+S'skim=dash&whiskey=lots'
 p4
 sS'pot'
 p5
