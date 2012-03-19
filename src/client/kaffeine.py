@@ -6,7 +6,7 @@ Created on 25 Feb 2012
 Main entry point for kaffeine client.
 '''
 
-import socket, sys, argparse, re
+import socket, sys, argparse, re, pickle
 from consts import *
     
 def main():
@@ -48,13 +48,15 @@ def main():
     if c['error']:
         close_sock(s, MSG_ERROR)
     
+    save_request({'host':host, 'pot':pot, 'adds':adds})
+    
     if not adds or not re.match(".*unspecified.*", adds):
         prompt_get(s, pot)
     
     else:
         prompt_pour(s, pot)
         prompt_when(s, pot)
-        prompt_get(s, pot)
+        prompt_get(s, pot) 
     
 def setup_args():
     parser = argparse.ArgumentParser(description='kaffeine, a HTCPCP-compliant coffee pot client')
@@ -73,6 +75,10 @@ def split_request(req):
     if len(path) > 1:
         adds = path[1]
     return host, pot, adds
+    
+def save_request(request):
+    with open("orders.coffee", "a") as f:
+        pickle.dump(request, f)
     
 def propfind(sock, request):
     msg = METHOD_PROPFIND + '/' + request + HTCPCP_VERSION
