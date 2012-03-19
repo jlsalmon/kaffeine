@@ -85,7 +85,7 @@ def save_request(request):
 def load_request():
     with open("orders.coffee", "rb") as f:
         request = pickle.load(f)
-        print ('Repeating your previous order of ' + request['adds']
+        print ('\nRepeating your previous order of ' + request['adds']
 			+ ' at ' + request['host'] + ' on ' + request['pot'])
         return request['host'], request['pot'], request['adds']
     

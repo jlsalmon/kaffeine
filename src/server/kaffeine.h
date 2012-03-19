@@ -20,6 +20,9 @@
 #define METHOD_WHEN     "WHEN"
 #define METHOD_PROPFIND "PROPFIND"
 #define CONTENT_TYPE    "Content-Type: message/coffeepot\r\n\r\n"
+#define SAFE_COND       "Safe: if-user-awake"
+#define SAFE_YES        "Safe: yes"
+#define SAFE_NO         "Safe: no"        
 
 #define C_200           "200 OK\r\n"
 #define C_400           "400 Bad Request\r\n"

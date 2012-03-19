@@ -246,6 +246,7 @@ void get_request(pot_struct* pot, char* adds, char* response) {
 
     strcat(response, C_200);
     strcat(response, CONTENT_TYPE);
+    strcat(response, SAFE_YES);
 
     if ((err = get(pot, adds, response))) {
         build_err_response(response, pot, err);

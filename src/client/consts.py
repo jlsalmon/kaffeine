@@ -34,7 +34,7 @@ PROMPT_WHEN     = 'Type "when" to finish pouring: '
 MSG_ERROR       = 'The server could not complete the request. Program will exit.'
 MSG_QUIT        = 'Connection closed. Program will exit.'
 MSG_COMPLETE    = 'Thank you for using kaffeine. We look forward'\
-                     + ' to quenching your digital thirst again.'
+                     + ' to quenching your\ndigital thirst again.'
 MSG_WELCOME     = '''
 *	Welcome to kaffeine, the virtual coffee shop of the future!
 *	Kaffeine uses the HTCPCP protocol to control an array of
