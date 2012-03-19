@@ -13,7 +13,7 @@ def main():
     args = setup_args()
     # Check request-uri is valid
     request = args['request-uri']
-    if request == 'coffee:':
+    if request[0] == 'coffee:':
         host, pot, adds = load_request()
     elif not verify_url(request):
         sys.exit('error: invalid request-uri structure')
@@ -171,8 +171,8 @@ def verify_url(url):
     if not re.match('coffee', parts[0]):
         return False 
     path = parts[2].split('/')
-    #if len(path) < 2:
-        #return False
+    if len(path) < 2:
+        return False
     if not re.match('[a-zA-Z0-9\.]+', path[0]):
         return False
     if not re.match('pot-[0-9]', path[1]):
