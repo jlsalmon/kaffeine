@@ -13,7 +13,9 @@ def main():
     args = setup_args()
     # Check request-uri is valid
     request = args['request-uri']
-    if not verify_url(request):
+    if request == 'coffee:':
+        host, pot, adds = load_request()
+    elif not verify_url(request):
         sys.exit('error: invalid request-uri structure')
     else:
         host, pot, adds = split_request(request)
@@ -77,8 +79,12 @@ def split_request(req):
     return host, pot, adds
     
 def save_request(request):
-    with open("orders.coffee", "a") as f:
+    with open("orders.coffee", "w") as f:
         pickle.dump(request, f)
+    
+def load_request():
+    with open("orders.coffee", "r") as f:
+        return pickle.load(f)
     
 def propfind(sock, request):
     msg = METHOD_PROPFIND + '/' + request + HTCPCP_VERSION
@@ -165,8 +171,8 @@ def verify_url(url):
     if not re.match('coffee', parts[0]):
         return False 
     path = parts[2].split('/')
-    if len(path) < 2:
-        return False
+    #if len(path) < 2:
+        #return False
     if not re.match('[a-zA-Z0-9\.]+', path[0]):
         return False
     if not re.match('pot-[0-9]', path[1]):
