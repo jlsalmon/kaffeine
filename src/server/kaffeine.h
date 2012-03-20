@@ -1,16 +1,19 @@
-/* 
- * File:   kaffeine.h
- * Author: jussy
- *
- * Created on 28 February 2012, 22:16
+/**
+ * File:        kaffeine.h
+ * Author:      Justin Lewis Salmon
+ * Student ID:  10000937
+ * Created on:  28 February 2012
+ * 
+ * Defines constants, structs, function definitions and global variables 
+ * for the kaffeine server.
  */
 
-#ifndef KAFFEINE_H
-#define	KAFFEINE_H
+#ifndef KAFFEINE_H_
+#define	KAFFEINE_H_
 
-#define USR_PORT 	60000           /* the port users connect to */
-#define MAX_Q_SIZE 	10              /* max no. of pending connections in server queue */
-#define MAX_DATA_SIZE 	1024            /* max message size in bytes */
+#define USR_PORT 	60000
+#define MAX_Q_SIZE 	10
+#define MAX_DATA_SIZE 	1024
 
 #define HTCPCP_VERSION  "HTCPCP/1.0 "
 #define METHOD_BREW     "BREW"
@@ -20,10 +23,10 @@
 #define METHOD_WHEN     "WHEN"
 #define METHOD_PROPFIND "PROPFIND"
 #define CONTENT_TYPE    "Content-Type: message/coffeepot\r\n\r\n"
-#define SAFE_COND       "Safe: if-user-awake\r\n"
 #define SAFE_YES        "Safe: yes\r\n"
 #define SAFE_NO         "Safe: no\r\n"        
 
+/* Status codes */
 #define C_200           "200 OK\r\n"
 #define C_400           "400 Bad Request\r\n"
 #define C_404           "404 Not Found\r\n"
@@ -43,6 +46,7 @@
 #define C_504           "504 Cup Overflow\r\n"
 #define C_505           "505 Cup Gone Cold\r\n"
 
+/* Status messages */
 #define M_200_BREW      "Your coffee is brewing. ETC (Estimated Time to Caffeination) = 20 seconds\r\n"
 #define M_200_POUR      "Your additions are being poured. Say WHEN.\r\n"
 #define M_200_WHEN      "Your additions were added successfully.\r\n"
@@ -67,18 +71,21 @@
 #define TRUE 		1
 #define FALSE		0
 
+/* A single thread's properties */
 typedef struct {
     pthread_t tid;
     int sock;
     int busy;
 } thread_struct;
 
+/* Max 5 pots => max 5 threads.*/
 thread_struct threads[NUM_POTS];
 char buf[MAX_DATA_SIZE];
 
 static void *handle_request(void *ptr);
 void parse_request(char*, char*);
 
+/* VCP wrapper calls */
 void propfind_request(pot_struct*, char*);
 void brew_request(pot_struct*, char*, char*);
 void get_request(pot_struct*, char*, char*);
@@ -89,6 +96,7 @@ int valid_method(char*);
 int extract_pot_id(char*);
 void build_err_response(char*, pot_struct*, int);
 
+/* Helper methods */
 int create_tcp_endpoint();
 void close_thread(thread_struct*);
 void log(char*);

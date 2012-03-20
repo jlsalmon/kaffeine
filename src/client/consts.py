@@ -1,8 +1,12 @@
-'''
-Created on 29 Feb 2012
+"""
+File:       consts.py
+Author:     Justin Lewis Salmon
+Student ID: 10000937
+Created on: 29 Feb 2012
 
-@author: jussy
-'''
+Application constants for kaffeine client.
+
+"""
 
 USR_PORT        = 60000
 MSG_BUF_SIZE    = 1024

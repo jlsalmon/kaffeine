@@ -1,11 +1,18 @@
-/* 
+/**
  * File:        kaffeine.c
  * Author:      Justin Lewis Salmon
  * Student ID:  10000937
  * Created on:  27 February 2012
  * 
- * HTCPCP/1.0 compliant coffee-pot server.
+ * HTCPCP 1.0 compliant coffee-pot server. Handles HTCPCP client requests, 
+ * allocates threads and sends HTCPCP responses based on the state of the
+ * array of Virtual Coffee Pots (VCPs). 
+ * 
+ * Whilst this server maintains a connection with the client until either 
+ * party terminates it due to error or successful completion, it is stateless.
+ * All state is held within the VCP.
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -70,8 +77,8 @@ int main(int argc, char *argv[]) {
             }
         } else {
             /* Accept the connection, save sock in thread struct */
-            if ((threads[curr_thread].sock = accept(
-                    sock, (struct sockaddr *) &client_addr, &sin_size)) < 0) {
+            if ((threads[curr_thread].sock = accept(sock,
+                    (struct sockaddr *) &client_addr, &sin_size)) < 0) {
                 log(strerror(errno));
                 exit(-1);
             }
@@ -83,11 +90,8 @@ int main(int argc, char *argv[]) {
             /* Mark thread as busy */
             threads[curr_thread].busy = TRUE;
             /* Create pthread and run request handler */
-            if (pthread_create(&threads[curr_thread].tid,
-                    NULL,
-                    &handle_request,
-                    (void *) &threads[curr_thread])
-                    != 0) {
+            if (pthread_create(&threads[curr_thread].tid, NULL,
+                    &handle_request, (void *) &threads[curr_thread]) != 0) {
                 log(strerror(errno));
                 exit(-2);
             }
@@ -98,7 +102,8 @@ int main(int argc, char *argv[]) {
 /**
  * Function called from pthread_create() when receiving a client connection.
  * 
- * @param tptr pointer to this thread's thread_struct.
+ * @param tptr
+ *              pointer to this thread's thread_struct.
  * @return success, or error on send/recv failure.
  */
 static void *handle_request(void *tptr) {
@@ -130,7 +135,8 @@ static void *handle_request(void *tptr) {
         if (strcmp(request, "\0") != 0) {
             parse_request(request, response);
 
-            if (send(thread->sock, response, strlen(response), MSG_NOSIGNAL) == -1) {
+            if (send(thread->sock, response, strlen(response), MSG_NOSIGNAL)
+                    == -1) {
                 log(strerror(errno));
                 close_thread(thread);
             }
@@ -138,13 +144,14 @@ static void *handle_request(void *tptr) {
             log(buf);
         }
         /* Receive next message */
-        if ((numbytes = recv(thread->sock, request, MAX_DATA_SIZE - 1, 0)) == -1) {
+        if ((numbytes = recv(thread->sock, request, MAX_DATA_SIZE - 1, 0))
+                == -1) {
             log(strerror(errno));
             close_thread(thread);
         }
         request[numbytes] = '\0';
     }
-    
+
     /* Client closed connection */
     sprintf(buf, "Thread %d exiting.", (int) pthread_self());
     log(buf);
@@ -157,8 +164,10 @@ static void *handle_request(void *tptr) {
  * method in the VCP, then builds a response message. Otherwise, the 
  * appropriate error response will be built.
  * 
- * @param request pointer to the client request string.
- * @param response pointer to the response string to be built.
+ * @param request 
+ *              pointer to the client request string.
+ * @param response 
+ *              pointer to the response string to be built.
  */
 void parse_request(char* request, char* response) {
     const char delimiters[] = " :/?";
@@ -167,10 +176,10 @@ void parse_request(char* request, char* response) {
     int pot_id;
 
     strcpy(response, HTCPCP_VERSION);
-
     rqcpy = strdup(request);
-    method = strtok(rqcpy, delimiters);
 
+    /* Extract and validate method */
+    method = strtok(rqcpy, delimiters);
     if (!valid_method(method)) {
         strcat(response, C_400);
         strcat(response, CONTENT_TYPE);
@@ -178,16 +187,9 @@ void parse_request(char* request, char* response) {
         return;
     }
 
+    /* Extract and validate pot number */
     pot_no = strtok(NULL, delimiters);
-
-    if (strstr(request, "?")) {
-        adds = strtok(NULL, delimiters);
-        strcat(adds, "\0");
-    }
-
-    protocol = strtok(NULL, delimiters);
     pot_id = extract_pot_id(pot_no);
-
     if (pot_id > NUM_POTS || pot_id < 0) {
         strcat(response, C_404);
         strcat(response, CONTENT_TYPE);
@@ -200,9 +202,19 @@ void parse_request(char* request, char* response) {
         return;
     }
 
-    fprintf(stderr, "Method: %s, Pot: %d\n"
-            , method, pot_id);
+    /* Extract additions, if they exist. VCP will validate. */
+    if (strstr(request, "?")) {
+        adds = strtok(NULL, delimiters);
+        strcat(adds, "\0");
+    }
 
+    protocol = strtok(NULL, delimiters);
+    fprintf(stderr, "Method: %s, Pot: %d\n", method, pot_id);
+
+    /*
+     * Is the requested pot in use by another thread? 
+     * If not, allocate it to this thread. Otherwise, return 420.
+     */
     if (pots[pot_id].current_thread == 0) {
         pots[pot_id].current_thread = pthread_self();
     } else if (!pthread_equal(pots[pot_id].current_thread, pthread_self())) {
@@ -212,12 +224,15 @@ void parse_request(char* request, char* response) {
         return;
     }
 
+    /* Call appropriate function based on request method. */
     if (strcmp(method, METHOD_PROPFIND) == 0) {
         propfind_request(&pots[pot_id], response);
 
     } else if (strcmp(method, METHOD_BREW) == 0) {
+        /* Get the Accept-Additions header. */
         start_line = strtok(request, "\r\n");
         header = strtok(NULL, "\r\n");
+        /* Ignore the Content-Type header. */
         if (header != NULL && strstr(header, "Content-Type")) {
             header = NULL;
         }
@@ -233,16 +248,38 @@ void parse_request(char* request, char* response) {
         when_request(&pots[pot_id], response);
 
     }
-
     return;
 }
 
+/**
+ * Wrapper call for VCP propfind() method. The response buffer will be
+ * filled with the string of valid additions for the specified pot.
+ * 
+ * @param pot
+ *              the pot to find properties for.
+ * @param response
+ *              pointer to the response buffer.
+ */
 void propfind_request(pot_struct * pot, char* response) {
     strcat(response, C_200);
     strcat(response, CONTENT_TYPE);
     propfind(pot, response);
 }
 
+/**
+ * Wrapper call for VCP brew() method. The pot state will be queried, 
+ * and upon success will be transitioned into a brewing state. Upon
+ * failure, the VCP will return an appropriate error code and the 
+ * response buffer will be filled with the appropriate HTCPCP error
+ * code and message.
+ * 
+ * @param pot
+ *              the pot to brew on.
+ * @param header
+ *              the HTCPCP Accept-Additions header.
+ * @param response
+ *              pointer to the response buffer.
+ */
 void brew_request(pot_struct* pot, char* header, char* response) {
     int err;
     if ((err = brew(pot, header))) {
@@ -254,6 +291,18 @@ void brew_request(pot_struct* pot, char* header, char* response) {
     }
 }
 
+/**
+ * Wrapper call for VCP get() method. Can either be used to brew coffee
+ * or collect a brewed cup, depending on whether the additions passed are
+ * NULL.
+ * 
+ * @param pot
+ *              the pot to brew on or collect from.
+ * @param adds
+ *              the request URI additions string.
+ * @param response
+ *              pointer to the response buffer.
+ */
 void get_request(pot_struct* pot, char* adds, char* response) {
     int err;
 
@@ -268,6 +317,16 @@ void get_request(pot_struct* pot, char* adds, char* response) {
     }
 }
 
+/**
+ * Wrapper for VCP pour() method. If an appropriate time to do so, the
+ * VCP will transition to a pouring state. Otherwise, the response buffer
+ * will be filled with the appropriate HTCPCP error code and message.
+ * 
+ * @param pot
+ *              the pot to begin pouring on.
+ * @param response
+ *              pointer to the response buffer.
+ */
 void pour_request(pot_struct* pot, char* response) {
     int err;
     if ((err = pour(pot))) {
@@ -279,6 +338,16 @@ void pour_request(pot_struct* pot, char* response) {
     }
 }
 
+/**
+ * Wrapper for VCP when() method. If an appropriate time to do so, the VCP
+ * will stop pouring and wait for collection. Otherwise, an appropriate
+ * response will be placed in the response buffer.
+ * 
+ * @param pot
+ *              the pot to cease pouring on.
+ * @param response
+ *              pointer to the response buffer.
+ */
 void when_request(pot_struct* pot, char* response) {
     int err;
     if ((err = when(pot))) {
@@ -290,6 +359,17 @@ void when_request(pot_struct* pot, char* response) {
     }
 }
 
+/**
+ * Constructs an HTCPCP server response message based on the given error
+ * code.
+ * 
+ * @param response
+ *              pointer to the response buffer.
+ * @param pot
+ *              pointer to the pot that generated the error.
+ * @param err
+ *              the error code that was generated.
+ */
 void build_err_response(char* response, pot_struct* pot, int err) {
     strcpy(response, HTCPCP_VERSION);
 
@@ -298,6 +378,7 @@ void build_err_response(char* response, pot_struct* pot, int err) {
             strcat(response, C_406);
             strcat(response, CONTENT_TYPE);
             strcat(response, M_406);
+            /* Invalid additions? Send back list of valid ones.*/
             propfind(pot, response);
             break;
         case E_OFF:
@@ -314,6 +395,7 @@ void build_err_response(char* response, pot_struct* pot, int err) {
             strcat(response, C_421);
             strcat(response, CONTENT_TYPE);
             strcat(response, M_421);
+            /* GET too soon? Send back remaining time. */
             calc_etc(response, pot);
             break;
         case E_STILL_POURING:
@@ -366,19 +448,33 @@ void build_err_response(char* response, pot_struct* pot, int err) {
     }
 }
 
+/**
+ * Determines whether the supplied method is a valid HTCPCP method.
+ * 
+ * @param method
+ *              the supplied method string.
+ * @return true if the method is valid, false otherwise.
+ */
 int valid_method(char* method) {
     if ((strcmp(method, METHOD_BREW) != 0)
             && (strcmp(method, METHOD_POST) != 0)
             && (strcmp(method, METHOD_GET) != 0)
             && (strcmp(method, METHOD_POUR) != 0)
             && (strcmp(method, METHOD_WHEN) != 0)
-            && (strcmp(method, METHOD_PROPFIND) != 0)
-            ) {
+            && (strcmp(method, METHOD_PROPFIND) != 0)) {
         return FALSE;
     }
     return TRUE;
 }
 
+/**
+ * Takes in a pot designator string like "pot-2" and returns the integer
+ * pot ID associated with it, i.e. integer 2.
+ * 
+ * @param pot_no
+ *              the pot-designator string.
+ * @return the integer pot ID.
+ */
 int extract_pot_id(char* pot_no) {
     const char delimiters[] = "-";
     char *head, *s_id;
@@ -388,7 +484,13 @@ int extract_pot_id(char* pot_no) {
     return atoi(s_id);
 }
 
-/* Useful function to create server endpoint */
+/**
+ * Useful function for creating a TCP socket to listen on.
+ * 
+ * @param port
+ *              the port number to use.
+ * @return the socket file descriptor.
+ */
 int create_tcp_endpoint(int port) {
     int sock, yes = 1;
     struct sockaddr_in server;
@@ -411,13 +513,12 @@ int create_tcp_endpoint(int port) {
     /* any server's IP addr */
     server.sin_addr.s_addr = htonl(INADDR_ANY);
     server.sin_port = htons(port);
-
+ 
+    /* Bind, then listen for client connections */
     if (bind(sock, (struct sockaddr *) &server, sizeof (server)) < 0) {
         log(strerror(errno));
         return -3;
     }
-
-    /* Listen for client connections */
     if (listen(sock, MAX_Q_SIZE) == -1) {
         log(strerror(errno));
         return -4;
@@ -426,6 +527,14 @@ int create_tcp_endpoint(int port) {
     return sock;
 }
 
+/**
+ * Deallocates the pot associated with the supplied thread struct, frees
+ * the thread, closes the thread's socket and destroys the thread itself 
+ * with pthread_exit().
+ * 
+ * @param thread
+ *              the thread_struct to close.
+ */
 void close_thread(thread_struct* thread) {
     for (int i = 0; i < NUM_POTS; ++i) {
         if (pthread_equal(pots[i].current_thread, pthread_self())) {
@@ -437,6 +546,14 @@ void close_thread(thread_struct* thread) {
     pthread_exit((void *) 1);
 }
 
+/**
+ * Handy function for printing timestamped server log messages. Shouldn't
+ * really be called log() because it overrides the built-in log() function,
+ * but I couldn't think of a better name that was short.
+ * 
+ * @param msg
+ *              pointer to the message buffer to be logged.
+ */
 void log(char* msg) {
     time_t timer;
     char buf[250];

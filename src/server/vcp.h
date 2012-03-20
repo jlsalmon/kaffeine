@@ -1,13 +1,17 @@
-/*
- * vcp.h
- *
- *  Created on: Feb 28, 2012
- *      Author: jl2-salmon
+/**
+ * File:        vcp.h
+ * Author:      Justin Lewis Salmon
+ * Student ID:  10000937
+ * Created on:  28 February 2012
+ * 
+ * Defines constants, structs, function definitions and global variables 
+ * for the virtual coffee pot.
  */
+
 #include <time.h>
 
 #ifndef VCP_H_
-//#define VCP_H_
+#define VCP_H_
 
 #define STATE_READY	0
 #define STATE_BREWING   1
@@ -67,7 +71,7 @@ Volume units:\t[1-5], dash, splash, little, medium, lots\n\
          \\    `========`    / \n\
           `'--------------'`\n"
 
-#define BREWING_TIME    5
+#define BREWING_TIME    20
 #define POURING_TIME    10
 #define T_TO_COLD       60
 #define MAX_ADDS        5
@@ -85,6 +89,7 @@ typedef struct {
     tfp action;
 } pot_state_table;
 
+/* A single VCP */
 typedef struct {
     int pot_id;
     int current_state;
