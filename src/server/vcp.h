@@ -7,7 +7,7 @@
 #include <time.h>
 
 #ifndef VCP_H_
-#define VCP_H_
+//#define VCP_H_
 
 #define STATE_READY	0
 #define STATE_BREWING   1

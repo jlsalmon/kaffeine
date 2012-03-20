@@ -1,10 +1,11 @@
-/*
- * kaffeine.c
- *
- *  Created on: Feb 27, 2012
- *      Author: jl2-salmon
+/* 
+ * File:        kaffeine.c
+ * Author:      Justin Lewis Salmon
+ * Student ID:  10000937
+ * Created on:  27 February 2012
+ * 
+ * HTCPCP/1.0 compliant coffee-pot server.
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -20,7 +21,7 @@
 #include "vcp.h"
 #include "kaffeine.h"
 
-int main(void) {
+int main(int argc, char *argv[]) {
 
     int sock, tmpsock, curr_thread;
     struct sockaddr_in client_addr;
@@ -43,10 +44,11 @@ int main(void) {
     sprintf(buf, "Accepting connections on port %d.", USR_PORT);
     log(buf);
 
-    /* main accept() loop */
+    /* Main accept() loop */
     while (1) {
         curr_thread = 0;
 
+        /* Find a free thread */
         while (threads[curr_thread].busy == TRUE && curr_thread < NUM_POTS) {
             curr_thread++;
         }
@@ -67,7 +69,7 @@ int main(void) {
                 exit(-1);
             }
         } else {
-
+            /* Accept the connection, save sock in thread struct */
             if ((threads[curr_thread].sock = accept(
                     sock, (struct sockaddr *) &client_addr, &sin_size)) < 0) {
                 log(strerror(errno));
@@ -78,7 +80,9 @@ int main(void) {
             sprintf(buf, "Connection established with %s", cli_addr);
             log(buf);
 
+            /* Mark thread as busy */
             threads[curr_thread].busy = TRUE;
+            /* Create pthread and run request handler */
             if (pthread_create(&threads[curr_thread].tid,
                     NULL,
                     &handle_request,
@@ -92,9 +96,10 @@ int main(void) {
 }
 
 /**
+ * Function called from pthread_create() when receiving a client connection.
  * 
- * @param tptr
- * @return 
+ * @param tptr pointer to this thread's thread_struct.
+ * @return success, or error on send/recv failure.
  */
 static void *handle_request(void *tptr) {
     thread_struct *thread;
@@ -109,44 +114,52 @@ static void *handle_request(void *tptr) {
     memset(request, 0, sizeof (request));
     request[0] = '\0';
 
-
-    /* receive initial message */
+    /* Receive initial message */
     if ((numbytes = recv(thread->sock, request, MAX_DATA_SIZE - 1, 0)) == -1) {
         log(strerror(errno));
         close_thread(thread);
     }
     request[numbytes] = '\0';
 
+    /* Sentinel value is "quit" */
     while (strcmp(request, "quit") != 0) {
         sprintf(buf, "Received: \n%s", request);
         log(buf);
 
+        /* Only parse the request if it isn't null */
         if (strcmp(request, "\0") != 0) {
             parse_request(request, response);
+
+            if (send(thread->sock, response, strlen(response), MSG_NOSIGNAL) == -1) {
+                log(strerror(errno));
+                close_thread(thread);
+            }
+            sprintf(buf, "Sent: \n%s", response);
+            log(buf);
         }
-
-        if (send(thread->sock, response, strlen(response), MSG_NOSIGNAL) == -1) {
-            log(strerror(errno));
-            close_thread(thread);
-        }
-        sprintf(buf, "Sent: \n%s", response);
-        log(buf);
-
-        //memset(&request, 0, sizeof (request));
-
+        /* Receive next message */
         if ((numbytes = recv(thread->sock, request, MAX_DATA_SIZE - 1, 0)) == -1) {
             log(strerror(errno));
             close_thread(thread);
         }
         request[numbytes] = '\0';
     }
-
+    
+    /* Client closed connection */
     sprintf(buf, "Thread %d exiting.", (int) pthread_self());
     log(buf);
     close_thread(thread);
     return 0;
 }
 
+/**
+ * Determines and validates the request method, and calls the appropriate
+ * method in the VCP, then builds a response message. Otherwise, the 
+ * appropriate error response will be built.
+ * 
+ * @param request pointer to the client request string.
+ * @param response pointer to the response string to be built.
+ */
 void parse_request(char* request, char* response) {
     const char delimiters[] = " :/?";
     char *start_line, *header, *method, *pot_no, *adds = NULL, *protocol;
