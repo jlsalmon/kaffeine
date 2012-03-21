@@ -78,7 +78,7 @@ def main():
         prompt_get(s, pot) 
     
 def setup_args():
-    """Return our args array which argparse built for us. """
+    """Return the args array which argparse built for us. """
     parser = argparse.ArgumentParser(description='kaffeine, a HTCPCP-compliant coffee pot client')
     parser.add_argument('request-uri', nargs=1, help='Coffee URI')
     parser.add_argument('-v', '--verbose', action='store_true', help='print verbose messages', required=False)
